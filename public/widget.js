@@ -1,8 +1,6 @@
 (async function() {
   const appId = document.currentScript.getAttribute("data-app-id");
 
-  const theme = searchParams?.theme ? JSON.parse(searchParams.theme) : {};
-
   // 1️⃣ Fetch configuration from Frappe
   let config = {};
   try {
