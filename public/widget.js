@@ -1,6 +1,8 @@
 (async function() {
   const appId = document.currentScript.getAttribute("data-app-id");
 
+  const theme = searchParams?.theme ? JSON.parse(searchParams.theme) : {};
+
   // 1️⃣ Fetch configuration from Frappe
   let config = {};
   try {
@@ -23,7 +25,7 @@
 
   // 2️⃣ Create iframe
   const iframe = document.createElement("iframe");
-  iframe.src = `https://widget.poshtibot.com/widget-frame?app_id=${appId}`;
+  iframe.src = `https://widget.poshtibot.com/widget-frame?app_id=${appId}&theme=${encodeURIComponent(JSON.stringify(config))}`;
   iframe.style.position = "fixed";
   iframe.style.width = "400px";
   iframe.style.height = "600px";
@@ -64,7 +66,7 @@
     font-size:26px;
   `;
   button.innerHTML = config.logo_url
-    ? `<img src="${config.logo_url}" style="width:60%;height:60%;object-fit:contain;border-radius:50%;" />`
+    ? `<img src="https://server.poshtibot.com${config.logo_url}" style="width:60%;height:60%;object-fit:contain;border-radius:50%;" />`
     : "💬";
 
   // 4️⃣ Create label

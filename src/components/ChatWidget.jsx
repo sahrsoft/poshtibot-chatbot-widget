@@ -1,9 +1,19 @@
 "use client";
 import { useState } from "react";
 
-export default function ChatWidget({ appId }) {
+export default function ChatWidget({ appId, theme }) {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
+
+    const styles = {
+        fontFamily: theme?.font_family || "sans-serif",
+        backgroundColor: "#fff",
+        borderTop: `4px solid ${theme?.primary_color || "#007bff"}`,
+        width: "100%",
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column"
+    };
 
     const sendMessage = async () => {
         if (!input) return;
@@ -38,16 +48,7 @@ export default function ChatWidget({ appId }) {
     };
 
     return (
-        <div
-            style={{
-                fontFamily: "sans-serif",
-                width: "100%",
-                height: "100vh",
-                display: "flex",
-                flexDirection: "column",
-                background: "#fff",
-            }}
-        >
+        <div style={styles}>
             <div
                 style={{
                     flex: 1,
