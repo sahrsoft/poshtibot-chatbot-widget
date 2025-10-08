@@ -2,7 +2,7 @@
     const appId = document.currentScript.getAttribute("data-app-id")
 
     const iframe = document.createElement("iframe")
-    iframe.src = "https://yourapp.com/widget-frame?app_id=" + appId
+    iframe.src = "https://widget.poshtibot.com/widget-frame?app_id=" + appId
     iframe.style.position = "fixed"
     iframe.style.bottom = "80px"
     iframe.style.right = "20px"
