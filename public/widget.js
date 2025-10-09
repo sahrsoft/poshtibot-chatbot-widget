@@ -73,10 +73,29 @@
     ? `<img src="https://server.poshtibot.com${config.logo_url}" style="width:60%;height:60%;object-fit:contain;border-radius:50%;" />`
     : "💬";
 
-  button.addEventListener("mouseenter", (e) => {
-    button.style.cssText = `
-      transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-    `
+  // Hover effect
+  button.addEventListener("mouseenter", () => {
+    button.style.setProperty("--tw-translate-x", "0");
+    button.style.setProperty("--tw-translate-y", "-3px");
+    button.style.setProperty("--tw-scale-x", "1.1");
+    button.style.setProperty("--tw-scale-y", "1.1");
+
+    button.style.transform =
+      "translate(var(--tw-translate-x), var(--tw-translate-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))";
+    button.style.width = "54px";
+    button.style.height = "54px";
+  });
+
+  button.addEventListener("mouseleave", () => {
+    button.style.setProperty("--tw-translate-x", "0");
+    button.style.setProperty("--tw-translate-y", "0");
+    button.style.setProperty("--tw-scale-x", "1");
+    button.style.setProperty("--tw-scale-y", "1");
+
+    button.style.transform =
+      "translate(var(--tw-translate-x), var(--tw-translate-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))";
+    button.style.width = "48px";
+    button.style.height = "48px";
   });
 
   // 4️⃣ Create label
