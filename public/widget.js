@@ -114,7 +114,7 @@
 
 
   const iframe = document.createElement("iframe");
-  iframe.src = `https://widget.poshtibot.com/chat?app_id=${appId}`;
+  iframe.src = `https://widget.poshtibot.com/widget-frame?app_id=${appId}&theme=${encodeURIComponent(JSON.stringify(config))}`;
   iframe.style.cssText = "border: none; width: 100%; height: 100%;";
   iframeContainer.appendChild(iframe);
 
@@ -132,13 +132,12 @@
       iframeContainer.style.transform = "scale(1)";
       iframeContainer.style.opacity = "1";
       label.style.opacity = "0";
-      button.style.transform = "rotate(45deg)";
-    } else {
-      iframeContainer.style.transform = "scale(0)";
-      iframeContainer.style.opacity = "0";
-      label.style.opacity = "1";
-      button.style.transform = "rotate(0deg)";
+      return;
+      // button.style.transform = "rotate(45deg)";
     }
+    iframeContainer.style.transform = "scale(0)";
+    iframeContainer.style.opacity = "0";
+    label.style.opacity = "1";
   });
 
 
