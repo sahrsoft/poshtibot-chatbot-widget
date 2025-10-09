@@ -75,25 +75,27 @@
 
   // Hover effect
   button.addEventListener("mouseenter", () => {
-    button.style.setProperty("--tw-translate-x", "0");
-    button.style.setProperty("--tw-translate-y", "-3px");
+    // button.style.setProperty("--tw-translate-x", "0");
+    // button.style.setProperty("--tw-translate-y", "-3px");
     button.style.setProperty("--tw-scale-x", "1.1");
     button.style.setProperty("--tw-scale-y", "1.1");
 
     button.style.transform =
-      "translate(var(--tw-translate-x), var(--tw-translate-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))";
+      "scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))";
+      // "translate(var(--tw-translate-x), var(--tw-translate-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))";
     button.style.width = "54px";
     button.style.height = "54px";
   });
 
   button.addEventListener("mouseleave", () => {
-    button.style.setProperty("--tw-translate-x", "0");
-    button.style.setProperty("--tw-translate-y", "0");
+    // button.style.setProperty("--tw-translate-x", "0");
+    // button.style.setProperty("--tw-translate-y", "0");
     button.style.setProperty("--tw-scale-x", "1");
     button.style.setProperty("--tw-scale-y", "1");
 
     button.style.transform =
-      "translate(var(--tw-translate-x), var(--tw-translate-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))";
+      "scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))";
+      // "translate(var(--tw-translate-x), var(--tw-translate-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))";
     button.style.width = "48px";
     button.style.height = "48px";
   });
