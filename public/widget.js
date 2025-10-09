@@ -90,6 +90,7 @@
     transition:opacity 0.3s ease;
     box-shadow: 0 2px 6px rgba(0,0,0,0.15);
     z-index: 999998;
+    text-align: right;
   `;
 
   // === IFRAME CONTAINER ===
