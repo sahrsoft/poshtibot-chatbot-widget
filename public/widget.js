@@ -55,8 +55,8 @@
     position:fixed;
     ${config.widget_position === "left-bottom" ? "left:20px" : "right:20px"};
     bottom:20px;
-    width:60px;
-    height:60px;
+    width:48px;
+    height:48px;
     background:${config.primary_color || primaryColor};
     color:white;
     border-radius:50%;
@@ -72,6 +72,12 @@
   button.innerHTML = config.logo_url
     ? `<img src="https://server.poshtibot.com${config.logo_url}" style="width:60%;height:60%;object-fit:contain;border-radius:50%;" />`
     : "💬";
+
+  button.addEventListener("mouseenter", (e) => {
+    button.style.cssText = `
+      transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+    `
+  });
 
   // 4️⃣ Create label
   const label = document.createElement("div");
@@ -92,6 +98,7 @@
     box-shadow: 0 2px 6px rgba(0,0,0,0.15);
     z-index: 999998;
     text-align: right;
+    direction: rtl;
   `;
 
   // === IFRAME CONTAINER ===
