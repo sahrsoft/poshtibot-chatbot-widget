@@ -1,15 +1,14 @@
 "use client";
 import { useState } from "react";
-import { Box, Fab, Typography, Zoom, Paper } from "@mui/material";
+import { Box, Fab, Zoom, Paper } from "@mui/material";
 import ChatIcon from "@mui/icons-material/Chat";
 import CloseIcon from "@mui/icons-material/Close";
 
-export default function WidgetRoot({ appId, primaryColor = "#0078FF", labelText = "Ask here" }) {
+export default function WidgetRoot({ appId }) {
     const [open, setOpen] = useState(false);
 
     return (
         <>
-            {/* Floating Label */}
             <Zoom in={!open}>
                 <Paper
                     sx={{
@@ -22,33 +21,29 @@ export default function WidgetRoot({ appId, primaryColor = "#0078FF", labelText 
                         boxShadow: 3,
                         fontSize: 14,
                         cursor: "default",
-                        transition: "all 0.3s",
-                        fontFamily: "Inter, sans-serif",
                     }}
                 >
-                    {labelText}
+                    Ask here
                 </Paper>
             </Zoom>
 
-            {/* Chat Button */}
             <Fab
                 onClick={() => setOpen(!open)}
                 sx={{
                     position: "fixed",
                     bottom: 24,
                     right: 24,
-                    bgcolor: primaryColor,
+                    bgcolor: "#0078FF",
                     color: "white",
                     "&:hover": { bgcolor: "#005FCC" },
-                    transition: "transform 0.3s",
                     transform: open ? "rotate(45deg)" : "none",
+                    transition: "transform 0.3s",
                     zIndex: 9999,
                 }}
             >
                 {open ? <CloseIcon /> : <ChatIcon />}
             </Fab>
 
-            {/* Iframe Container */}
             <Box
                 sx={{
                     position: "fixed",
@@ -68,11 +63,10 @@ export default function WidgetRoot({ appId, primaryColor = "#0078FF", labelText 
                 }}
             >
                 <iframe
-                    src={`https://widget.poshtibot.com/widget?app_id=${appId}`}
-                    title="Poshtibot chat widget"
+                    src={`http://localhost:3000/chat?app_id=${appId}`}
+                    title="Poshtibot chat"
                     style={{ width: "100%", height: "100%", border: "none" }}
                 />
-
             </Box>
         </>
     );
