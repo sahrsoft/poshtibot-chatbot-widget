@@ -1,21 +1,19 @@
 (function () {
-  if (window.PoshtibotLoaded) return;
-  window.PoshtibotLoaded = true;
-
-  const scriptTag = document.currentScript;
-  const appId = scriptTag.getAttribute("data-app-id");
+  const script = document.currentScript;
+  const appId = script.getAttribute("data-app-id");
+  const primaryColor = script.getAttribute("data-primary-color") || "#0078FF";
+  const labelText = script.getAttribute("data-label-text") || "Ask here";
 
   const iframe = document.createElement("iframe");
-  // iframe.src = `https://widget.poshtibot.com?app_id=${appId}`;
   iframe.src = `https://widget.poshtibot.com/widget?app_id=${appId}&primary_color=${encodeURIComponent(primaryColor)}&label_text=${encodeURIComponent(labelText)}`;
-  iframe.style.position = "fixed";
-  iframe.style.bottom = "20px";
-  iframe.style.right = "20px";
-  iframe.style.width = "80px";
-  iframe.style.height = "80px";
-  iframe.style.border = "none";
-  iframe.style.zIndex = "9999";
-  iframe.allow = "cross-origin-isolated";
-
+  iframe.style.cssText = `
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    z-index: 9999;
+  `;
   document.body.appendChild(iframe);
 })();
