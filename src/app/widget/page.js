@@ -1,20 +1,10 @@
 import WidgetRoot from "@/components/WidgetRoot"
 
 const page = async ({ searchParams }) => {
-    const appId = await searchParams?.app_id || "unknown";
-
-    // ✅ Decode theme from query
-    let theme = {};
-    try {
-        theme = await searchParams?.theme
-            ? JSON.parse(decodeURIComponent(await searchParams.theme))
-            : {};
-    } catch (e) {
-        console.error("Error parsing theme", e);
-    }
+    const chatbotId = await searchParams?.chatbot_id || "unknown"
 
     return (
-        <WidgetRoot appId={appId} theme={theme} />
+        <WidgetRoot chatbotId={chatbotId} />
     )
 }
 

@@ -1,3 +1,8 @@
+@font-face {
+  font-family: 'Peyda';
+  src: url('/fonts/PeydaWeb-Regular.woff2') format('woff2');
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
