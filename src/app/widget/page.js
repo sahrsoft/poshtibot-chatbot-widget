@@ -1,7 +1,6 @@
-import ChatWidget from "@/components/ChatWidget";
-// import WidgetRoot from "@/components/WidgetRoot";
+import WidgetRoot from "@/components/WidgetRoot"
 
-export default function WidgetFrame({ searchParams }) {
+const page = ({ searchParams }) => {
     const appId = searchParams?.app_id || "unknown";
 
     // ✅ Decode theme from query
@@ -14,7 +13,9 @@ export default function WidgetFrame({ searchParams }) {
         console.error("Error parsing theme", e);
     }
 
-    // return <WidgetRoot appId={appId} theme={theme} />;
-    return <ChatWidget appId={appId} theme={theme} />;
-
+    return (
+        <WidgetRoot appId={appId} theme={theme} />
+    )
 }
+
+export default page
