@@ -21,7 +21,7 @@ export default function WidgetRoot({ chatbotId }) {
                 const pwc = JSON.stringify(data?.message)
 
                 localStorage.setItem("poshtibot-widget-config", pwc)
-
+                
             } catch (e) {
                 console.warn("Using default config", e)
                 setConfig({
