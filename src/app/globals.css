@@ -1,6 +1,6 @@
 @font-face {
-  font-family: 'Peyda';
-  src: url('/fonts/PeydaWeb-Regular.woff2') format('woff2');
+  font-family: 'Vazir';
+  src: url('/fonts/Vazir-Medium.woff2') format('woff2');
 }
 
 :root {
@@ -24,7 +24,7 @@ body {
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: 'Peyda';
+  font-family: 'Vazir';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   direction: rtl;

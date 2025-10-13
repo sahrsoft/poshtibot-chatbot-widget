@@ -9,6 +9,11 @@ export default function WidgetRoot({ chatbotId }) {
     const [config, setConfig] = useState({})
 
     useEffect(() => {
+const pwc = JSON.parse(localStorage.getItem("poshtibot-widget-config"))
+        setConfig(pwc)    }, [])
+
+
+    useEffect(() => {
         const getConfig = async () => {
             try {
                 const res = await fetch(
@@ -40,6 +45,17 @@ export default function WidgetRoot({ chatbotId }) {
     }, [chatbotId])
 
 
+    useEffect(() => {
+        const handleMessage = (event) => {
+            if (event.data?.type === "CLOSE_CHAT_WIDGET") {
+                setOpen(false)
+            }
+        }
+
+        window.addEventListener("message", handleMessage);
+        return () => window.removeEventListener("message", handleMessage);
+    }, [])
+
     return (
         <>
             <Zoom in={!open}>
@@ -51,7 +67,7 @@ export default function WidgetRoot({ chatbotId }) {
                         [config?.widget_position || "right"]: 90,
                         px: 2,
                         py: 1,
-                        borderRadius: 2,
+                        borderRadius: 50,
                         boxShadow: 3,
                         fontFamily: "Peyda",
                         fontSize: 14,
@@ -65,42 +81,44 @@ export default function WidgetRoot({ chatbotId }) {
                 </Paper>
             </Zoom>
 
-            <Fab
-                size="medium"
-                onClick={() => setOpen(!open)}
-                sx={{
-                    position: "fixed",
-                    bottom: 40,
-                    [config?.widget_position || "right"]: 40,
-                    bgcolor: config?.icon_background_color || "#00d285",
-                    color: config?.icon_color || "#fff",
-                    "&:hover": {
-                        bgcolor: `color-mix(in srgb, ${config?.icon_background_color} 90%, black)`,
-                        // transform: "scale(1.1)"
-                        transform: config?.logo_url ? "scale(1.1)" : "",
-                    },
-                    // "&:hover": { bgcolor: "#005FCC" },
-                    transform: config?.logo_url ? "none" : (open ? "rotate(90deg)" : "none"),
-                    transition: "transform 0.3s",
-                    zIndex: 9999,
-                }}
-            >
-                {config?.logo_url ? (
-                    <Image src={`https://server.poshtibot.com${config?.logo_url}`} width={24} height={24} alt="poshtibot" />
-                ) : (
-                    open ? <Icon icon="majesticons:close-line" width="24" height="24" /> : <Image src='/images/whiteicon.png' width={24} height={30} alt="poshtibotlogo" style={{marginTop: -2}} />
+            {open ? "" : (
+                <Fab
+                    size="medium"
+                    onClick={() => setOpen(!open)}
+                    sx={{
+                        position: "fixed",
+                        bottom: 40,
+                        [config?.widget_position || "right"]: 40,
+                        bgcolor: config?.icon_background_color || "#00d285",
+                        color: config?.icon_color || "#fff",
+                        "&:hover": {
+                            bgcolor: `color-mix(in srgb, ${config?.icon_background_color} 90%, black)`,
+                            // transform: "scale(1.1)"
+                            transform: config?.logo_url ? "scale(1.1)" : "",
+                        },
+                        // "&:hover": { bgcolor: "#005FCC" },
+                        transform: config?.logo_url ? "none" : (open ? "rotate(90deg)" : "none"),
+                        transition: "transform 0.3s",
+                        zIndex: 9999,
+                    }}
+                >
+                    {config?.logo_url ? (
+                        <Image src={`https://server.poshtibot.com${config?.logo_url}`} width={24} height={24} alt="poshtibot" />
+                    ) : (
+                        <Image src='/images/whiteicon.png' width={24} height={30} alt="poshtibotlogo" style={{ marginTop: -2 }} />
 
-                )}
-            </Fab>
+                    )}
+                </Fab>
+            )}
 
             <Box
                 sx={{
                     position: "fixed",
-                    bottom: 100,
-                    [config?.widget_position || "right"]: 45,
-                    width: 380,
-                    height: 600,
-                    borderRadius: 7,
+                    bottom: { xs: 0, sm: 40 },
+                    [config?.widget_position || "right"]: { xs: 0, sm: 45 },
+                    width: { xs: '100%', sm: 380 },
+                    height: { xs: '100%', sm: 600 },
+                    borderRadius: { xs: 0, sm: 7 },
                     overflow: "hidden",
                     boxShadow: 5,
                     transformOrigin: "bottom right",
@@ -112,8 +130,8 @@ export default function WidgetRoot({ chatbotId }) {
                 }}
             >
                 <iframe
-                    src={`https://widget.poshtibot.com/chat?chatbot_id=${chatbotId}`}
-                    // src={`http://localhost:3000/chat?chatbot_id=${chatbotId}`}
+                    // src={`https://widget.poshtibot.com/chat?chatbot_id=${chatbotId}`}
+                    src={`http://localhost:3000/chat?chatbot_id=${chatbotId}`}
                     title="Poshtibot chat"
                     style={{ width: "100%", height: "100%", border: "none" }}
                 />
