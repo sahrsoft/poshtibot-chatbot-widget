@@ -1,9 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Box, Fab, Zoom, Paper } from "@mui/material";
-import ChatIcon from "@mui/icons-material/Chat";
-import CloseIcon from "@mui/icons-material/Close";
 import Image from "next/image";
+import { Icon } from "@iconify/react";
 
 export default function WidgetRoot({ chatbotId }) {
     const [open, setOpen] = useState(false)
@@ -21,11 +20,11 @@ export default function WidgetRoot({ chatbotId }) {
                 const pwc = JSON.stringify(data?.message)
 
                 localStorage.setItem("poshtibot-widget-config", pwc)
-                
+
             } catch (e) {
                 console.warn("Using default config", e)
                 setConfig({
-                    primary_color: "#007bff",
+                    primary_color: "#00d285",
                     label_text: "از من بپرس 😊",
                     label_color: "#000",
                     label_background_color: "#fff",
@@ -71,9 +70,9 @@ export default function WidgetRoot({ chatbotId }) {
                 onClick={() => setOpen(!open)}
                 sx={{
                     position: "fixed",
-                    bottom: 24,
-                    [config?.widget_position || "right"]: 24,
-                    bgcolor: config?.icon_background_color || "#0078FF",
+                    bottom: 40,
+                    [config?.widget_position || "right"]: 40,
+                    bgcolor: config?.icon_background_color || "#00d285",
                     color: config?.icon_color || "#fff",
                     "&:hover": {
                         bgcolor: `color-mix(in srgb, ${config?.icon_background_color} 90%, black)`,
@@ -89,18 +88,19 @@ export default function WidgetRoot({ chatbotId }) {
                 {config?.logo_url ? (
                     <Image src={`https://server.poshtibot.com${config?.logo_url}`} width={24} height={24} alt="poshtibot" />
                 ) : (
-                    open ? <CloseIcon /> : <ChatIcon />
+                    open ? <Icon icon="majesticons:close-line" width="24" height="24" /> : <Image src='/images/whiteicon.png' width={24} height={30} alt="poshtibotlogo" style={{marginTop: -2}} />
+
                 )}
             </Fab>
 
             <Box
                 sx={{
                     position: "fixed",
-                    bottom: 90,
-                    [config?.widget_position || "right"]: 30,
-                    width: 400,
+                    bottom: 100,
+                    [config?.widget_position || "right"]: 45,
+                    width: 380,
                     height: 600,
-                    borderRadius: 3,
+                    borderRadius: 7,
                     overflow: "hidden",
                     boxShadow: 5,
                     transformOrigin: "bottom right",
@@ -112,7 +112,8 @@ export default function WidgetRoot({ chatbotId }) {
                 }}
             >
                 <iframe
-                    src={`http://localhost:3000/chat?chatbot_id=${chatbotId}`}
+                    src={`https://widget.poshtibot.com/chat?chatbot_id=${chatbotId}`}
+                    // src={`http://localhost:3000/chat?chatbot_id=${chatbotId}`}
                     title="Poshtibot chat"
                     style={{ width: "100%", height: "100%", border: "none" }}
                 />
