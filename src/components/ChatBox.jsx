@@ -13,7 +13,6 @@ export default function ChatWidget() {
     const [config, setConfig] = useState({})
     const [notifications, setNotifications] = useState(true)
     const [anchorElChat, setAnchorElChat] = useState(null)
-    const chatMenuOpen = Boolean(anchorElChat)
 
     useEffect(() => {
         const pwc = JSON.parse(localStorage.getItem("poshtibot-widget-config"))
@@ -106,6 +105,12 @@ export default function ChatWidget() {
         }
     }
 
+    const handleCloseChat = () => {
+        // send a message to the parent window (WidgetRoot)
+        window.parent.postMessage({ type: "CLOSE_CHAT_WIDGET" }, "*");
+    }
+
+
     return (
         <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#fff' }}>
             {/* Header */}
@@ -116,20 +121,19 @@ export default function ChatWidget() {
                     pt: 3,
                     pb: 2,
                     px: 2,
-                    borderRadius: '20px 20px 0 0',
                 }}
             >
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                     <Box display="flex" alignItems="center">
-                        <IconButton sx={{ bgcolor: 'white',ml: 1 }}>
+                        <IconButton sx={{ bgcolor: 'white', ml: 1 }}>
                             <Image src='/images/poshtibotlogo.png' width={18.939} height={20} alt="poshtibotlogo" />
                         </IconButton>
-                        <Box display="flex" mt={.5}>
+                        {/* <Box display="flex" mt={.5}>
                             <Typography mt={.25} sx={{ fontSize: 17 }}>
                                 گفتگو با
                             </Typography>
                             <Typography px={.5} fontSize={19}>ستایش سعادتی</Typography>
-                        </Box>
+                        </Box> */}
                     </Box>
                     <Box>
                         <IconButton
@@ -140,6 +144,13 @@ export default function ChatWidget() {
                                 <Icon icon="heroicons:bell-alert" width="24" height="24" />
                                 :
                                 <Icon icon="heroicons:bell-slash" width="24" height="24" />}
+                        </IconButton>
+
+                        <IconButton
+                            onClick={handleCloseChat}
+                            sx={{ color: '#fff', border: '1px solid #e3eded', mx: 1 }}
+                        >
+                            {<Icon icon="icon-park-outline:down" width="24" height="24" />}
                         </IconButton>
                     </Box>
                 </Box>
@@ -385,8 +396,30 @@ export default function ChatWidget() {
                     vertical: 'bottom',
                     horizontal: 'left',
                 }}
-                PaperProps={{
-                    sx: { maxWidth: { xs: '85vw', sm: 320 } },
+                slotProps={{
+                    paper: {
+                        sx: {
+                            maxWidth: { xs: '100vw' },
+                            direction: 'ltr',
+                            overflowY: 'auto',
+                            '&::-webkit-scrollbar': {
+                                width: '10px',
+                            },
+                            '&::-webkit-scrollbar-track': {
+                                background: '#f5f9f9',
+                                borderRadius: '4px',
+                            },
+                            '&::-webkit-scrollbar-thumb': {
+                                background: '#accbbd',
+                                borderRadius: '4px',
+                                '&:hover': {
+                                    background: '#20403c',
+                                },
+                            },
+                            scrollbarWidth: 'thin',
+                            scrollbarColor: '#accbbd #f5f9f9',
+                        }
+                    }
                 }}
             >
                 <EmojiPicker onEmojiClick={handleEmojiClick} />
