@@ -9,9 +9,8 @@ export default function WidgetRoot({ chatbotId }) {
     const [config, setConfig] = useState({})
 
     useEffect(() => {
-        const pwc = JSON.parse(localStorage.getItem("poshtibot-widget-config"))
-        setConfig(pwc)
-    }, [])
+const pwc = JSON.parse(localStorage.getItem("poshtibot-widget-config"))
+        setConfig(pwc)    }, [])
 
 
     useEffect(() => {
@@ -68,7 +67,7 @@ export default function WidgetRoot({ chatbotId }) {
                         [config?.widget_position || "right"]: 90,
                         px: 2,
                         py: 1,
-                        borderRadius: 2,
+                        borderRadius: 50,
                         boxShadow: 3,
                         fontFamily: "Peyda",
                         fontSize: 14,
