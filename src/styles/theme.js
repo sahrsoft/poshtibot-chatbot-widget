@@ -10,7 +10,6 @@ const theme = createTheme({
     colorSchemes: {
         light: {
             palette: {
-                // The best part is that you can refer to the variables wherever you like 🤩
                 gradient:
                     'linear-gradient(to left, var(--mui-palette-primary-main), var(--mui-palette-primary-dark))',
                 border: {

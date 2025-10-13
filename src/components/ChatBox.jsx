@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useState, useRef  } from "react"
-import { Box,Typography,TextField, IconButton ,Popover, List, ListItem, ListItemText, ListItemIcon, Menu, MenuItem  } from "@mui/material"
+import { useEffect, useState, useRef } from "react"
+import { Box, Typography, TextField, IconButton, Popover, List, ListItem, ListItemText, ListItemIcon, Menu, MenuItem } from "@mui/material"
 import { Icon } from '@iconify/react'
 import { motion } from 'framer-motion'
 import EmojiPicker from "emoji-picker-react"
+import Image from "next/image"
 
 export default function ChatWidget() {
     const [messages, setMessages] = useState([{ from: "bot", text: "سلام، چطور می تونم کمک تون کنم؟" }])
@@ -106,56 +107,40 @@ export default function ChatWidget() {
     }
 
     return (
-        <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#fff', dir: 'rtl' }}>
+        <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#fff' }}>
             {/* Header */}
             <Box
                 sx={{
-                    background: 'linear-gradient(210deg, rgb(0, 210, 133), rgba(54, 255, 165, 0.67))',
+                    background: 'rgb(0, 210, 133)',
                     color: '#fff',
-                    p: 2,
-                    borderRadius: '16px 16px 0 0',
+                    pt: 3,
+                    pb: 2,
+                    px: 2,
+                    borderRadius: '20px 20px 0 0',
                 }}
             >
                 <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Box display="flex" alignItems="center" gap={2}>
-                        <Box>
-                            <Typography sx={{ fontSize: 17 }}>
+                    <Box display="flex" alignItems="center">
+                        <IconButton sx={{ bgcolor: 'white',ml: 1 }}>
+                            <Image src='/images/poshtibotlogo.png' width={18.939} height={20} alt="poshtibotlogo" />
+                        </IconButton>
+                        <Box display="flex" mt={.5}>
+                            <Typography mt={.25} sx={{ fontSize: 17 }}>
                                 گفتگو با
                             </Typography>
-                            <Typography fontSize={16}>ستایش سعادتی</Typography>
+                            <Typography px={.5} fontSize={19}>ستایش سعادتی</Typography>
                         </Box>
                     </Box>
                     <Box>
                         <IconButton
-                            onClick={handleChatMenuOpen}
-                            sx={{ color: '#fff' }}
+                            onClick={handleToggleNotifications}
+                            sx={{ color: '#fff', border: '1px solid #e3eded' }}
                         >
-                            <Icon icon="solar:bell-linear" width="24" height="24" />
+                            {notifications ?
+                                <Icon icon="heroicons:bell-alert" width="24" height="24" />
+                                :
+                                <Icon icon="heroicons:bell-slash" width="24" height="24" />}
                         </IconButton>
-                        <Menu
-                            anchorEl={anchorElChat}
-                            open={chatMenuOpen}
-                            onClose={handleChatMenuClose}
-                            PaperProps={{
-                                sx: {
-                                    borderRadius: '8px',
-                                    border: '1px solid #e3eded',
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                                    mt: 1,
-                                },
-                            }}
-                        >
-                            <MenuItem
-                                onClick={handleToggleNotifications}
-                                sx={{
-                                    color: '#20403c',
-                                    '&:hover': { bgcolor: 'rgba(0, 210, 133, 0.1)' },
-                                }}
-                            >
-                                <Icon icon="solar:bell-linear" />
-                                {notifications ? 'خاموش کردن اعلان‌ها' : 'روشن کردن اعلان‌ها'}
-                            </MenuItem>
-                        </Menu>
                     </Box>
                 </Box>
             </Box>
@@ -163,10 +148,10 @@ export default function ChatWidget() {
             <Box
                 sx={{
                     flexGrow: 1,
-                    p: .5,
+                    p: 1.5,
                     overflowY: 'auto',
                     '&::-webkit-scrollbar': {
-                        width: '4px',
+                        width: '10px',
                     },
                     '&::-webkit-scrollbar-track': {
                         background: '#f5f9f9',
@@ -176,7 +161,7 @@ export default function ChatWidget() {
                         background: '#accbbd',
                         borderRadius: '4px',
                         '&:hover': {
-                            background: '#456a69',
+                            background: '#20403c',
                         },
                     },
                     scrollbarWidth: 'thin',
@@ -201,12 +186,13 @@ export default function ChatWidget() {
                             sx={{
                                 maxWidth: { xs: '75%', sm: '70%' },
                                 px: 2,
-                                pt: 1.5,
-                                pb: .5,
-                                borderRadius: msg.from === 'user' ? '35px 35px 0 35px ' : '35px 35px 35px 0',
-                                background: msg.from === 'user' ? 'rgba(0, 210, 133, 0.51)' : '#f5f9f9',
-                                fontSize: { xs: '13px', sm: '14px' },
-                                color: '#20403c',
+                                pt: 1,
+                                pb: 1,
+                                // borderRadius: msg.from === 'user' ? '35px 35px 0 35px ' : '35px 35px 35px 0',
+                                borderRadius: 2,
+                                background: msg.from === 'user' ? '#a3f5c4' : '#f5f9f9',
+                                fontSize: { xs: '14px', sm: '15px' },
+                                color: 'black',
                             }}
                         >
                             {msg.file ? (
@@ -253,7 +239,8 @@ export default function ChatWidget() {
 
             <Box
                 sx={{
-                    p: .5,
+                    px: 2,
+                    py: 1,
                     borderTop: '1px solid #e3eded',
                     bgcolor: '#fff',
                 }}
@@ -285,6 +272,7 @@ export default function ChatWidget() {
                             direction: 'rtl',
                         }}
                     >
+
                         <List sx={{ p: 0, m: 0 }}>
                             {conversationStarters.filter(starter => starter.enabled && starter.text.trim()).map((starter) => (
                                 <ListItem
@@ -323,7 +311,15 @@ export default function ChatWidget() {
                     onSubmit={(e) => { e.preventDefault(); sendMessage(); }}
                     sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                 >
+                    <IconButton onClick={handleEmojiButtonClick} sx={{
+                        p: 1, border: '1px solid #e3eded', '&:hover': {
+                            borderColor: 'rgb(0, 210, 133)'
+                        },
+                    }}>
+                        <Icon icon="solar:sticker-circle-linear" width="20" height="20" style={{ color: '#577e7d' }} />
+                    </IconButton>
                     <TextField
+                        className='light-bg-input-autofill'
                         size="small"
                         variant="outlined"
                         value={input}
@@ -332,39 +328,37 @@ export default function ChatWidget() {
                         sx={{
                             flexGrow: 1,
                             '& .MuiOutlinedInput-root': {
-                                borderRadius: '8px',
+                                borderRadius: '120px',
                                 backgroundColor: '#fff',
                                 '& fieldset': { borderColor: '#e3eded' },
-                                '&:hover fieldset': { borderColor: '#accbbd' },
-                                '&.Mui-focused fieldset': { borderColor: 'rgb(0, 210, 133)' },
+                                '&:hover fieldset': { borderColor: 'rgb(0, 210, 133)' },
+                                '&.Mui-focused fieldset': { border: '1px solid', borderColor: 'rgb(0, 210, 133)' },
                             },
                             '& .MuiInputBase-input': {
                                 color: '#20403c',
                                 fontSize: { xs: '14px', sm: '15px' },
                                 padding: '8px',
+                                px: 3
                             },
                         }}
                     />
-                    {input && (
+                    {!input ? (
+                        <IconButton onClick={() => fileInputRef.current.click()} sx={{
+                            p: 1.25, border: '1px solid #e3eded', '&:hover': {
+                                borderColor: 'rgb(0, 210, 133)'
+                            },
+                        }}>
+                            <Icon icon="solar:paperclip-linear" width="20" height="20" style={{ color: '#577e7d' }} />
+                        </IconButton>
+                    ) : (
                         <IconButton type="submit" sx={{ p: 0.5 }}>
-                            <Icon
-                                icon="solar:map-arrow-left-bold"
-                                width="24"
-                                height="24"
-                                style={{ color: 'rgb(0, 210, 133)' }}
-                            />
+                            <Icon icon="fa6-brands:telegram" fontSize={32} style={{ color: 'rgb(0, 210, 133)' }} />
                         </IconButton>
                     )}
                 </Box>
 
-                <Box display="flex" justifyContent="space-between" alignItems="center" mt={0.5}>
+                <Box display="flex" justifyContent="center" alignItems="center" mt={0.5}>
                     <Box display="flex" gap={0.5}>
-                        <IconButton onClick={handleEmojiButtonClick} sx={{ p: 0.5 }}>
-                            <Icon icon="solar:smile-circle-linear" width="20" height="20" style={{ color: '#577e7d' }} />
-                        </IconButton>
-                        <IconButton onClick={() => fileInputRef.current.click()} sx={{ p: 0.5 }}>
-                            <Icon icon="solar:paperclip-linear" width="20" height="20" style={{ color: '#577e7d' }} />
-                        </IconButton>
                         <input
                             type="file"
                             ref={fileInputRef}
@@ -372,8 +366,8 @@ export default function ChatWidget() {
                             onChange={handleFileUpload}
                         />
                     </Box>
-                    <Typography sx={{ color: '#577e7d', fontSize: { xs: 11, sm: 12 } }}>
-                        قدرت گرفته از پشتیبات
+                    <Typography sx={{ color: '#577e7d', fontSize: { xs: 11, sm: 12 }, pt: 1 }}>
+                        قدرت گرفته از پشتیبات 💚
                     </Typography>
                 </Box>
             </Box>
