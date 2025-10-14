@@ -57,14 +57,6 @@ export default function ChatWidget() {
         sendMessage()
     }
 
-    const handleChatMenuOpen = (event) => {
-        setAnchorElChat(event.currentTarget)
-    }
-
-    const handleChatMenuClose = () => {
-        setAnchorElChat(null)
-    }
-
     const handleToggleNotifications = () => {
         setNotifications(prev => !prev)
     }
@@ -81,17 +73,6 @@ export default function ChatWidget() {
         if (!file) return
         const url = URL.createObjectURL(file)
         setMessages(prev => [...prev, { from: 'user', text: `file: ${file.name}`, file: url, timestamp: Date.now() }])
-    }
-    const formatTimestamp = (ts) => {
-        // If there's no timestamp, return empty string so UI stays clean
-        if (!ts) return ''
-        try {
-            const d = new Date(ts)
-            // Prefer Persian locale formatting if available
-            return d.toLocaleString('fa-IR')
-        } catch (e) {
-            return String(ts)
-        }
     }
 
     const sendMessage = async () => {
@@ -144,8 +125,12 @@ export default function ChatWidget() {
             >
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                     <Box display="flex" alignItems="center">
-                        <IconButton sx={{ bgcolor: 'white', ml: 1 }}>
-                            <Image src='/images/poshtibotlogo.png' width={18.939} height={20} alt="poshtibotlogo" />
+                        <IconButton sx={{
+                            bgcolor: 'white', ml: 1, width: 45, height: 45, '&:hover': {
+                                background: '#f5f9f9',
+                            },
+                        }}>
+                            <Image src='/images/poshtibotlogo.png' width={23.5} height={24.8} alt="poshtibotlogo" />
                         </IconButton>
                         {/* <Box display="flex" mt={.5}>
                             <Typography mt={.25} sx={{ fontSize: 17 }}>
@@ -269,7 +254,7 @@ export default function ChatWidget() {
 
             <Box
                 sx={{
-                    px: 2,
+                    px: 1,
                     py: 1,
                     borderTop: '1px solid #e3eded',
                     bgcolor: '#fff',
@@ -303,17 +288,18 @@ export default function ChatWidget() {
                         }}
                     >
 
-                        <List sx={{ p: 0, m: 0 }}>
+                        <List sx={{ p: 0, ml: .5 }}>
                             {conversationStarters.filter(starter => starter.enabled && starter.text.trim()).map((starter) => (
                                 <ListItem
                                     key={starter.id}
                                     onClick={() => handleStarterClick(starter.text)}
                                     sx={{
                                         px: 1,
+                                        py: .5,
                                         cursor: 'pointer',
                                         backgroundColor: '#f5f9f9',
                                         borderRadius: '8px',
-                                        my: 1,
+                                        my: .5,
                                         display: 'flex',
                                         flexDirection: 'column',
                                         alignItems: 'flex-start',
