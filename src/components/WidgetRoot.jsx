@@ -4,6 +4,7 @@ import Image from "next/image"
 import { useEffect, useState } from "react"
 import { Box, Fab, Zoom, Paper } from "@mui/material"
 import { v4 as uuidv4 } from 'uuid'
+import { AnimatePresence, motion } from "framer-motion";
 
 
 export default function WidgetRoot({ chatbotId }) {
@@ -69,28 +70,89 @@ export default function WidgetRoot({ chatbotId }) {
 
     return (
         <>
-            <Zoom in={!open}>
-                <Paper
-                    sx={{
-                        direction: "rtl",
-                        position: "fixed",
-                        bottom: 80,
-                        [config?.widget_position || "right"]: 90,
-                        px: 2,
-                        py: 1,
-                        borderRadius: 50,
-                        boxShadow: 3,
-                        fontFamily: "Peyda",
-                        fontSize: 14,
-                        fontWeight: 900,
-                        cursor: "default",
-                        bgcolor: config?.label_background_color || "#fff",
-                        color: config?.label_color || "#000"
-                    }}
-                >
-                    {config?.label_text ? config?.label_text : "از من بپرس 😊"}
-                </Paper>
-            </Zoom>
+            <AnimatePresence mode="wait">
+                {open ? null : (
+                    <motion.div
+                        key="closed"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 20 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        layout
+                    >
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                                position: 'fixed',
+                                bottom: 40,
+                                [config?.widget_position || "right"]: 40,
+                                zIndex: 9999,
+                            }}
+                        >
+                            <Box
+                                onClick={() => setOpen(true)}
+                                sx={{
+                                    width: 50,
+                                    height: 50,
+                                    borderRadius: '50%',
+                                    background: config?.icon_background_color || '#00d285',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 6px 24px rgba(0, 0, 0, 0.14)',
+                                    "&:hover": {
+                                        transform: "scale(1.1)",
+                                        transition: "transform 0.3s ease",
+                                    },
+                                }}
+                            >
+                                {config?.logo_url ? (
+                                    <Image
+                                        src={`https://server.poshtibot.com${config?.logo_url}`}
+                                        width={25}
+                                        height={25}
+                                        alt="poshtibot"
+                                        style={{ objectFit: 'contain' }}
+                                    />
+                                ) : (
+                                    <Image
+                                        src="/images/whiteicon.png"
+                                        width={25}
+                                        height={28}
+                                        alt="poshtibotlogo"
+                                        style={{ objectFit: 'contain' }}
+                                    />
+                                )}
+                            </Box>
+
+                            <motion.div
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.4, delay: 0.3 }}
+                            >
+                                <Box
+                                    sx={{
+                                        background: config?.label_background_color || '#fff',
+                                        color: config?.label_color || '#000',
+                                        borderRadius: '25px',
+                                        px: 2,
+                                        py: 1,
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                        fontFamily: 'Vazir',
+                                        cursor: 'pointer',
+                                    }}
+                                    onClick={() => setOpen(true)}
+                                >
+                                    {config?.label_text || "از من بپرس 😊"}
+                                </Box>
+                            </motion.div>
+                        </Box>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {open ? "" : (
                 <Fab
@@ -141,12 +203,12 @@ export default function WidgetRoot({ chatbotId }) {
                 }}
             >
                 <iframe
-                    src={`https://widget.poshtibot.com/chat?chatbot_id=${chatbotId}`}
-                    // src={`http://localhost:3000/chat?chatbot_id=${chatbotId}`}
+                    // src={`https://widget.poshtibot.com/chat?chatbot_id=${chatbotId}`}
+                    src={`http://localhost:3000/chat?chatbot_id=${chatbotId}`}
                     title="Poshtibot chat"
                     style={{ width: "100%", height: "100%", border: "none" }}
                 />
             </Box>
         </>
-    );
+    )
 }
