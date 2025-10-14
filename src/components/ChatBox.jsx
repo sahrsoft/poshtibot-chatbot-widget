@@ -1,11 +1,13 @@
 'use client'
 
+import Image from "next/image"
 import { useEffect, useState, useRef } from "react"
 import { Box, Typography, TextField, IconButton, Popover, List, ListItem, ListItemText, ListItemIcon, Menu, MenuItem } from "@mui/material"
 import { Icon } from '@iconify/react'
 import { motion } from 'framer-motion'
 import EmojiPicker from "emoji-picker-react"
-import Image from "next/image"
+import { useChat } from "@/hooks/useChat"
+import { v4 as uuidv4 } from 'uuid'
 
 export default function ChatWidget() {
     const [messages, setMessages] = useState([{ from: "bot", text: "سلام، چطور می تونم کمک تون کنم؟" }])
@@ -13,23 +15,35 @@ export default function ChatWidget() {
     const [config, setConfig] = useState({})
     const [notifications, setNotifications] = useState(true)
     const [anchorElChat, setAnchorElChat] = useState(null)
-
-    useEffect(() => {
-        const pwc = JSON.parse(localStorage.getItem("poshtibot-widget-config"))
-        setConfig(pwc)
-    }, [])
-
+    const [conversationId, setConversationId] = useState(null)
+    const [userId, setUserId] = useState(null)
     const [typing, setTyping] = useState(false)
     const [botTypingText, setBotTypingText] = useState('')
     const [anchorEl, setAnchorEl] = useState(null)
+
     const id = anchorEl ? 'emoji-popover' : undefined
     const open = Boolean(anchorEl)
     const chatEndRef = useRef(null)
     const fileInputRef = useRef(null)
 
     useEffect(() => {
+        const conversationData = JSON.parse(localStorage.getItem("poshtibot-conversation-data"))
+        setConversationId(conversationData.poshtibot_conversation_id)
+        setUserId(conversationData.poshtibot_user_id)
+
+        const pwc = JSON.parse(localStorage.getItem("poshtibot-widget-config"))
+        setConfig(pwc)
+
+        const messages = JSON.parse(localStorage.getItem("poshtibot-messages"))
+        if (messages) setMessages(messages)
+
+    }, [])
+
+    useEffect(() => {
         chatEndRef?.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages, typing])
+
+    const { sendUser, joinGroup } = useChat({ userId })
 
     const conversationStarters = [
         { id: '1', text: 'در مورد محصولات سوال دارم', enabled: true },
@@ -88,21 +102,26 @@ export default function ChatWidget() {
         setMessages(newMessages)
         setInput("")
 
+        joinGroup(conversationId)
+        sendUser(config.user_flows_data, conversationId, input)
+
+        localStorage.setItem("poshtibot-messages", JSON.stringify(newMessages))
+
         // Send message to Frappe API
-        try {
-            const res = await fetch("https://server.poshtibot.com/api/method/poshtibot.api.send_msg", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: input })
-            })
-            const data = await res.json()
-            const botReply = data.message || "Sorry, I didn’t understand that."
-            setMessages([...newMessages, { from: "bot", text: botReply }])
-        } catch (err) {
-            console.error(err)
-            const botReply = "Sorry, I didn’t understand that."
-            setMessages([...newMessages, { from: "bot", text: botReply }])
-        }
+        // try {
+        //     const res = await fetch("https://server.poshtibot.com/api/method/poshtibot.api.send_msg", {
+        //         method: "POST",
+        //         headers: { "Content-Type": "application/json" },
+        //         body: JSON.stringify({ message: input })
+        //     })
+        //     const data = await res.json()
+        //     const botReply = data.message || "Sorry, I didn’t understand that."
+        //     setMessages([...newMessages, { from: "bot", text: botReply }])
+        // } catch (err) {
+        //     console.error(err)
+        //     const botReply = "Sorry, I didn’t understand that."
+        //     setMessages([...newMessages, { from: "bot", text: botReply }])
+        // }
     }
 
     const handleCloseChat = () => {

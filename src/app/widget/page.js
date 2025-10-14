@@ -1,10 +1,12 @@
 import WidgetRoot from "@/components/WidgetRoot"
 
 const page = async ({ searchParams }) => {
-    const chatbotId = await searchParams?.chatbot_id || "unknown"
+    // const chatbotId = await searchParams?.chatbot_id || "unknown"
+
+    const { chatbot_id } = await searchParams
 
     return (
-        <WidgetRoot chatbotId={chatbotId} />
+        <WidgetRoot chatbotId={chatbot_id} />
     )
 }
 

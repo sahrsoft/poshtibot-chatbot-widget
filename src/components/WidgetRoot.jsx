@@ -1,16 +1,27 @@
-"use client";
-import { useEffect, useState } from "react";
-import { Box, Fab, Zoom, Paper } from "@mui/material";
-import Image from "next/image";
-import { Icon } from "@iconify/react";
+"use client"
+
+import Image from "next/image"
+import { useEffect, useState } from "react"
+import { Box, Fab, Zoom, Paper } from "@mui/material"
+import { v4 as uuidv4 } from 'uuid'
+
 
 export default function WidgetRoot({ chatbotId }) {
     const [open, setOpen] = useState(false)
     const [config, setConfig] = useState({})
 
     useEffect(() => {
-const pwc = JSON.parse(localStorage.getItem("poshtibot-widget-config"))
-        setConfig(pwc)    }, [])
+        const conversationData = localStorage.getItem("poshtibot-conversation-data")
+        if (!conversationData) {
+            const conversationData = {
+                "poshtibot_conversation_id": uuidv4(),
+                "poshtibot_user_id": uuidv4()
+            }
+            localStorage.setItem("poshtibot-conversation-data", JSON.stringify(conversationData))
+        }
+        const pwc = JSON.parse(localStorage.getItem("poshtibot-widget-config"))
+        setConfig(pwc)
+    }, [])
 
 
     useEffect(() => {
@@ -131,7 +142,7 @@ const pwc = JSON.parse(localStorage.getItem("poshtibot-widget-config"))
             >
                 <iframe
                     // src={`https://widget.poshtibot.com/chat?chatbot_id=${chatbotId}`}
-                    src={`http://localhost:3000/chat?chatbot_id=${chatbotId}`}
+                    src={`http://localhost:3001/chat?chatbot_id=${chatbotId}`}
                     title="Poshtibot chat"
                     style={{ width: "100%", height: "100%", border: "none" }}
                 />
