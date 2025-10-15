@@ -4,10 +4,9 @@ import Image from "next/image"
 import { useEffect, useState, useRef } from "react"
 import { Box, Typography, TextField, IconButton, Popover, List, ListItem, ListItemText, ListItemIcon, Menu, MenuItem } from "@mui/material"
 import { Icon } from '@iconify/react'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import EmojiPicker from "emoji-picker-react"
 import { useChat } from "@/hooks/useChat"
-import { v4 as uuidv4 } from 'uuid'
 
 export default function ChatWidget() {
     const [messages, setMessages] = useState([{ from: "bot", text: "سلام، چطور می تونم کمک تون کنم؟" }])
@@ -20,6 +19,8 @@ export default function ChatWidget() {
     const [typing, setTyping] = useState(false)
     const [botTypingText, setBotTypingText] = useState('')
     const [anchorEl, setAnchorEl] = useState(null)
+    const [showSupportBtn, setShowSupportBtn] = useState(true)
+
 
     const id = anchorEl ? 'emoji-popover' : undefined
     const open = Boolean(anchorEl)
@@ -53,8 +54,12 @@ export default function ChatWidget() {
     const hasUserMessage = messages.some(msg => msg.from === 'user')
 
     const handleStarterClick = (starterText) => {
-        setInput(starterText)
-        sendMessage()
+        const newMessages = [...messages, { from: "user", text: starterText }]
+        setMessages(newMessages)
+        setInput("")
+        joinGroup(conversationId)
+        sendUser(config.user_flows_data, conversationId, starterText)
+        localStorage.setItem("poshtibot-messages", JSON.stringify(newMessages))
     }
 
     const handleToggleNotifications = () => {
@@ -252,6 +257,49 @@ export default function ChatWidget() {
                 <div ref={chatEndRef} />
             </Box>
 
+            <AnimatePresence>
+                {messages.length % 9 == 0 && showSupportBtn && (
+                    <motion.div
+                        key="support-btn"
+                        initial={{ opacity: 0, y: 40, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 40, scale: 0.9 }}
+                        transition={{ duration: 0.6, ease: "easeInOut" }}
+                    >
+                        <Box sx={{ display: "flex", justifyContent: "center", mt: 1.5 }}>
+                            <motion.div
+                                whileHover={{ scale: 1.01 }}
+                                whileTap={{ scale: 0.99 }}
+                                transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                            >
+                                <Box
+                                    display={'flex'}
+                                    sx={{
+                                        mt: -2.5,
+                                        border: '1px solid rgba(74, 255, 186, 0.23)',
+                                        borderBottom: 'none',
+                                        bgcolor: 'rgba(74, 255, 198, 0.09)',
+                                        borderRadius: 2,
+                                        borderBottomRightRadius: 0,
+                                        borderBottomLeftRadius: 0,
+                                        color: "#00d285",
+                                        px: .5,
+                                        py: .5,
+                                        fontSize: 12,
+                                        cursor: "pointer",
+                                        textAlign: "center",
+                                    }}
+                                >
+                                    <Typography fontSize={13} px={1}>
+                                        درخواست پشتیبان انسانی
+                                    </Typography>
+                                </Box>
+                            </motion.div>
+                        </Box>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <Box
                 sx={{
                     px: 1,
@@ -260,25 +308,19 @@ export default function ChatWidget() {
                     bgcolor: '#fff',
                 }}
             >
-                {!hasUserMessage && conversationStarters.filter(starter => starter.enabled && starter.text.trim()).length > 0 && (
+                {!hasUserMessage && messages.length < 9 && conversationStarters.filter(starter => starter.enabled && starter.text.trim()).length > 0 && (
                     <Box
                         sx={{
                             width: '100%',
                             maxHeight: '150px',
                             overflowY: 'auto',
                             overflowX: 'hidden',
-                            '&::-webkit-scrollbar': {
-                                width: '4px',
-                            },
-                            '&::-webkit-scrollbar-track': {
-                                background: '#f5f9f9',
-                            },
+                            '&::-webkit-scrollbar': { width: '4px' },
+                            '&::-webkit-scrollbar-track': { background: '#f5f9f9' },
                             '&::-webkit-scrollbar-thumb': {
                                 background: '#577e7d',
                                 borderRadius: '4px',
-                                '&:hover': {
-                                    background: '#accbbd',
-                                },
+                                '&:hover': { background: '#accbbd' },
                             },
                             scrollbarWidth: 'thin',
                             scrollbarColor: '#577e7d #f5f9f9',
@@ -287,7 +329,6 @@ export default function ChatWidget() {
                             direction: 'rtl',
                         }}
                     >
-
                         <List sx={{ p: 0, ml: .5 }}>
                             {conversationStarters.filter(starter => starter.enabled && starter.text.trim()).map((starter) => (
                                 <ListItem
@@ -322,6 +363,7 @@ export default function ChatWidget() {
                         </List>
                     </Box>
                 )}
+
                 <Box
                     component="form"
                     onSubmit={(e) => { e.preventDefault(); sendMessage(); }}
