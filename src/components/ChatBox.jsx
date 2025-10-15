@@ -7,6 +7,7 @@ import { Icon } from '@iconify/react'
 import { AnimatePresence, motion } from 'framer-motion'
 import EmojiPicker from "emoji-picker-react"
 import { useChat } from "@/hooks/useChat"
+import { v4 as uuidv4 } from 'uuid'
 
 export default function ChatWidget() {
     const [messages, setMessages] = useState([{ from: "bot", text: "سلام، چطور می تونم کمک تون کنم؟" }])
@@ -112,7 +113,7 @@ export default function ChatWidget() {
 
     const handleCloseChat = () => {
         // send a message to the parent window (WidgetRoot)
-        window.parent.postMessage({ type: "CLOSE_CHAT_WIDGET" }, "*");
+        window.parent.postMessage({ type: "CLOSE_CHAT_WIDGET" }, "*")
     }
 
 
