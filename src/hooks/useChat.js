@@ -21,22 +21,23 @@ export function useChat({ userId }) {
       console.log("Socket connected:", socket.connect())
     })
 
-    const onPrivate = (msg) => setMessages(prev => [...prev, { ...msg, type: "private" }])
-    const onGroup = (msg) => setMessages(prev => [...prev, { ...msg, type: "group" }])
-    const onUser = (msg) => setMessages(prev => [...prev, { ...msg, type: "user" }])
-    const onSaved = (m) => console.debug("message:saved", m)
+    // const onPrivate = (msg) => setMessages(prev => [...prev, { ...msg, type: "private" }])
+    // const onGroup = (msg) => setMessages(prev => [...prev, { ...msg, type: "group" }])
+    // const onUser = (msg) => setMessages(prev => [...prev, { ...msg, sender: "user" }])
+    const onPoshtibot = (message) => setMessages(prev => [...prev, { message, sender: "poshtibot" }])
     const onError = (e) => console.error("socket error", e)
 
-    socket.on("message:private", onPrivate)
-    socket.on("message:group", onGroup)
-    socket.on("message:user", onUser)
-    socket.on("message:saved", onSaved)
+    // socket.on("message:private", onPrivate)
+    // socket.on("message:group", onGroup)
+    // socket.on("message:user", onUser)
+    socket.on("message:poshtibot", onPoshtibot)
     socket.on("message:error", onError)
+
     return () => {
-      socket.off("message:private", onPrivate)
-      socket.off("message:group", onGroup)
-      socket.off("message:user", onUser)
-      socket.off("message:saved", onSaved)
+      // socket.off("message:private", onPrivate)
+      // socket.off("message:group", onGroup)
+      // socket.off("message:user", onUser)
+      socket.off("message:poshtibot", onPoshtibot)
       socket.off("message:error", onError)
     }
   }, []) // run once
@@ -89,7 +90,7 @@ export function useChat({ userId }) {
       return
     }
     socket.emit("user_message", { user_flows_data: userFlowsData, conversation_id:conversationId, message })
-    setMessages(prev => [...prev, { sender: "User", chat_room: conversationId, message, type: "user", local: true }])
+    // setMessages(prev => [...prev, { sender: "User", chat_room: conversationId, message, type: "user", local: true }])
   }, [userId])
 
   return { messages, sendPrivate, sendGroup, sendUser, joinGroup }

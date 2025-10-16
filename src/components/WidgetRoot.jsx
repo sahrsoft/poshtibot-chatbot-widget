@@ -203,8 +203,8 @@ export default function WidgetRoot({ chatbotId }) {
                 }}
             >
                 <iframe
-                    src={`https://widget.poshtibot.com/chat?chatbot_id=${chatbotId}`}
-                    // src={`http://localhost:3000/chat?chatbot_id=${chatbotId}`}
+                    // src={`https://widget.poshtibot.com/chat?chatbot_id=${chatbotId}`}
+                    src={`http://localhost:3000/chat?chatbot_id=${chatbotId}`}
                     title="Poshtibot chat"
                     style={{ width: "100%", height: "100%", border: "none" }}
                 />
