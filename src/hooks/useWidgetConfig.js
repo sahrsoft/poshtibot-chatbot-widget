@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { LOCAL_STORAGE_CONFIG_KEY } from '@/lib/constants'
+import { LOCAL_STORAGE_CONFIG_KEY, LOCAL_STORAGE_STARTER_KEY } from '@/lib/constants'
 
 // A default config to ensure the widget is always usable, even on API failure.
 const DEFAULT_CONFIG = {
@@ -12,7 +12,7 @@ const DEFAULT_CONFIG = {
     icon_color: "#fff",
     icon_background_color: "#00d285",
     widget_position: "right",
-};
+}
 
 export function useWidgetConfig(chatbotId) {
     // 1. Use lazy initialization for state from localStorage.
@@ -24,6 +24,16 @@ export function useWidgetConfig(chatbotId) {
         } catch (error) {
             console.error("Failed to parse cached config:", error)
             return DEFAULT_CONFIG
+        }
+    })
+
+    const [starterMessages, setStarterMessages] = useState(() => {
+        try {
+            const cachedStarter = localStorage.getItem(LOCAL_STORAGE_STARTER_KEY)
+            return cachedStarter ? JSON.parse(cachedStarter) : []
+        } catch (error) {
+            console.error("Failed to parse cached config:", error)
+            return []
         }
     })
 
@@ -41,11 +51,19 @@ export function useWidgetConfig(chatbotId) {
                 const data = await res.json()
 
                 if (data?.message) {
-                    setConfig(data.message)
-                    localStorage.setItem(LOCAL_STORAGE_CONFIG_KEY, JSON.stringify(data.message))
+                    if (data?.message?.widget_config) {
+                        setConfig(data.message.widget_config)
+                        localStorage.setItem(LOCAL_STORAGE_CONFIG_KEY, JSON.stringify(data.message.widget_config))
+                    }
+
+                    if (data?.message?.starter_messages) {
+                        setStarterMessages(data.message.starter_messages)
+                        localStorage.setItem(LOCAL_STORAGE_STARTER_KEY, JSON.stringify(data.message.starter_messages))
+                    }
                 } else {
                     // If the API returns a valid but empty response, use default.
                     setConfig(DEFAULT_CONFIG)
+                    setStarterMessages([])
                 }
             } catch (e) {
                 console.warn("Failed to fetch widget config, using cached or default.", e)
@@ -56,5 +74,5 @@ export function useWidgetConfig(chatbotId) {
         fetchConfig()
     }, [chatbotId])
 
-    return config
+    return { config, starterMessages }
 }

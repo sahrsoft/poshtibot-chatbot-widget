@@ -17,7 +17,7 @@ const WIDGET_URL = process.env.NODE_ENV === 'production'
 
 export default function WidgetRoot({ chatbotId }) {
     const [open, setOpen] = useState(false)
-    const config = useWidgetConfig(chatbotId) // Custom hook handles all config logic
+    const {config, starterMessages} = useWidgetConfig(chatbotId) // Custom hook handles all config logic
 
     // Effect for initializing conversation/user IDs
     useEffect(() => {

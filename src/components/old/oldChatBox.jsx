@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import EmojiPicker from "emoji-picker-react"
 import { useChat } from "@/hooks/useChat"
 import { usePoshtibotSetup } from "../../hooks/usePoshtibotSetup"
+import { LOCAL_STORAGE_MESSAGES_KEY } from "@/lib/constants"
 
 const ChatWidget = () => {
 
@@ -39,7 +40,7 @@ const ChatWidget = () => {
             const newOnes = messages.filter(m => !seen.has(JSON.stringify(m.id)))
             if (newOnes.length === 0) return prev
             const merged = [...prev, ...newOnes]
-            localStorage.setItem("poshtibot-messages", JSON.stringify(merged))
+            localStorage.setItem(LOCAL_STORAGE_MESSAGES_KEY, JSON.stringify(merged))
             return merged
         })
 
@@ -59,7 +60,7 @@ const ChatWidget = () => {
         const newMsg = { sender: "user", message: trimmed, id: Date.now() }
         setAllMessages(prev => {
             const updated = [...prev, newMsg]
-            localStorage.setItem("poshtibot-messages", JSON.stringify(updated))
+            localStorage.setItem(LOCAL_STORAGE_MESSAGES_KEY, JSON.stringify(updated))
             return updated
         })
 
@@ -95,7 +96,7 @@ const ChatWidget = () => {
         const newMsg = { sender: "user", message: starterText, id: Date.now() }
         setAllMessages(prev => {
             const updated = [...prev, newMsg]
-            localStorage.setItem("poshtibot-messages", JSON.stringify(updated))
+            localStorage.setItem(LOCAL_STORAGE_MESSAGES_KEY, JSON.stringify(updated))
             return updated
         })
 

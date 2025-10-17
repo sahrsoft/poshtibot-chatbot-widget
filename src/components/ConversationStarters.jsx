@@ -6,7 +6,7 @@ import { Icon } from '@iconify/react'
 
 const ConversationStarters = ({ starters, onStarterClick }) => {
     // Filter enabled starters once
-    const enabledStarters = starters.filter(s => s.enabled && s.message.trim())
+    const enabledStarters = starters.filter(s => s.enable && s.message.trim())
 
     if (enabledStarters.length === 0) {
         return null // Don't render anything if there are no valid starters

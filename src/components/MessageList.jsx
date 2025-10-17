@@ -43,7 +43,7 @@ const Message = memo(({ msg }) => (
 ))
 Message.displayName = 'Message'
 
-const MessageList = ({ allMessages, isTyping, botTypingText, chatEndRef }) => {
+const MessageList = ({ allMessages, isTyping, chatEndRef }) => {
     return (
         <Box sx={{
             flexGrow: 1,
@@ -74,11 +74,7 @@ const MessageList = ({ allMessages, isTyping, botTypingText, chatEndRef }) => {
                             color: '#20403c'
                         }}
                     >
-                        {botTypingText ? (
-                            <Typography component="span">{botTypingText}</Typography>
-                        ) : (
-                            <Icon icon="svg-spinners:3-dots-fade" width="24" height="24" />
-                        )}
+                        <Icon icon="svg-spinners:3-dots-fade" width="24" height="24" />
                     </Box>
                 </Box>
             )}

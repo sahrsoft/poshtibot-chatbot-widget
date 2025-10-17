@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react"
+import { LOCAL_STORAGE_CONFIG_KEY, LOCAL_STORAGE_CONVERSATION_KEY, LOCAL_STORAGE_MESSAGES_KEY, LOCAL_STORAGE_STARTER_KEY } from '@/lib/constants'
+
 
 const DEFAULT_BOT_MESSAGE = { sender: "poshtibot", message: "سلام، چطور می‌تونم کمکتون کنم؟" }
 
@@ -7,21 +9,24 @@ export function usePoshtibotSetup() {
     const [conversationId, setConversationId] = useState(null)
     const [userId, setUserId] = useState(null)
     const [allMessages, setAllMessages] = useState([DEFAULT_BOT_MESSAGE])
+    const [starterMessages, setStarterMessages] = useState(null)
 
     useEffect(() => {
         let intervalId = null
 
         const loadFromLocalStorage = () => {
             try {
-                const conversationData = JSON.parse(localStorage.getItem("poshtibot-conversation-data") || "{}")
-                const pwc = JSON.parse(localStorage.getItem("poshtibot-widget-config") || "null")
-                const savedMessages = JSON.parse(localStorage.getItem("poshtibot-messages") || "[]")
+                const conversationData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CONVERSATION_KEY) || {})
+                const pwc = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CONFIG_KEY) || {})
+                const savedMessages = JSON.parse(localStorage.getItem(LOCAL_STORAGE_MESSAGES_KEY) || [])
+                const starter = JSON.parse(localStorage.getItem(LOCAL_STORAGE_STARTER_KEY) || [])
 
                 if (pwc) {
                     setConfig(pwc)
                     setConversationId(conversationData.poshtibot_conversation_id)
                     setUserId(conversationData.poshtibot_user_id)
                     setAllMessages(savedMessages.length > 0 ? savedMessages : [DEFAULT_BOT_MESSAGE])
+                    setStarterMessages(starter)
                     return true
                 }
             } catch (err) {
@@ -68,5 +73,5 @@ export function usePoshtibotSetup() {
         // }
     }, [])
 
-    return { config, conversationId, userId, allMessages, setAllMessages }
+    return { config, conversationId, userId, allMessages, setAllMessages, starterMessages }
 }

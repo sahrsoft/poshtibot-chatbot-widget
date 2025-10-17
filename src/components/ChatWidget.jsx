@@ -9,27 +9,21 @@ import MessageList from "./MessageList"
 import ConversationStarters from "./ConversationStarters"
 import SupportButton from "./SupportButton"
 import ChatInput from "./ChatInput"
+import { LOCAL_STORAGE_MESSAGES_KEY } from "@/lib/constants"
+import CollectLeads from "./CollectLeads"
 
 const ChatWidget = () => {
     const [notifications, setNotifications] = useState(true)
-    const [botTypingText, setBotTypingText] = useState('')
-    const [showSupportBtn, setShowSupportBtn] = useState(true)
     const [showInitMsg, setShowInitMsg] = useState(true)
 
     const chatEndRef = useRef(null)
 
-    const { config, conversationId, userId, allMessages, setAllMessages } = usePoshtibotSetup()
+    const { config, conversationId, userId, allMessages, setAllMessages, starterMessages } = usePoshtibotSetup()
 
-    const { sendUserMessage, messages, isTyping } = useChat({ userId, conversationId})
+    const { sendUserMessage, messages, isTyping } = useChat({ userId, conversationId })
 
     // Memoize the conversation starters array to prevent re-renders
-    const conversationStarters = useMemo(() => [
-        { id: '1', message: 'در مورد محصولات سوال دارم', enabled: true },
-        { id: '2', message: 'وضعیت سفارش من', enabled: true },
-        { id: '3', message: 'وضعیت سفارش من', enabled: true },
-        { id: '4', message: 'وضعیت سفارش من', enabled: true },
-        { id: '5', message: 'وضعیت سفارش من', enabled: true }
-    ], [])
+    const conversationStarters = useMemo(() => starterMessages, [starterMessages])
 
     useEffect(() => {
         if (!messages?.length) return
@@ -38,7 +32,7 @@ const ChatWidget = () => {
             const newOnes = messages.filter(m => !seen.has(m.id))
             if (newOnes.length === 0) return prev
             const merged = [...prev, ...newOnes]
-            localStorage.setItem("poshtibot-messages", JSON.stringify(merged))
+            localStorage.setItem(LOCAL_STORAGE_MESSAGES_KEY, JSON.stringify(merged))
             return merged
         })
     }, [messages, setAllMessages])
@@ -49,12 +43,12 @@ const ChatWidget = () => {
 
     // Memoized callback for sending a message
     const handleSendMessage = useCallback((messageText) => {
-        console.log("messageText",messageText)
+        console.log("messageText", messageText)
         if (!messageText) return
         const newMsg = { sender: "user", message: messageText, id: Date.now() }
         setAllMessages(prev => {
             const updated = [...prev, newMsg]
-            localStorage.setItem("poshtibot-messages", JSON.stringify(updated))
+            localStorage.setItem(LOCAL_STORAGE_MESSAGES_KEY, JSON.stringify(updated))
             return updated
         })
         setShowInitMsg(false) // Hide starters after first message
@@ -75,8 +69,8 @@ const ChatWidget = () => {
     // Memoize the calculation for showing the support button
     const isSupportButtonVisible = useMemo(() => {
         const userMessageCount = allMessages.filter(msg => msg.sender === "user").length
-        return config?.enable_agent_handoff === 1 && userMessageCount > 0 && userMessageCount % 4 === 0 && showSupportBtn
-    }, [allMessages, config, showSupportBtn])
+        return config?.enable_agent_handoff === 1 && userMessageCount > 0 && userMessageCount % 4 === 0
+    }, [allMessages, config])
 
     if (!config) {
         return <Box sx={{ p: 4, textAlign: "center" }}>در حال بارگذاری...</Box>
@@ -90,12 +84,16 @@ const ChatWidget = () => {
                 onCloseChat={handleCloseChat}
             />
 
-            <MessageList
-                allMessages={allMessages}
-                isTyping={isTyping}
-                botTypingText={botTypingText}
-                chatEndRef={chatEndRef}
-            />
+            {config?.enable_collect_leads ? (
+                <CollectLeads />
+            ) : (
+                <MessageList
+                    allMessages={allMessages}
+                    isTyping={isTyping}
+                    chatEndRef={chatEndRef}
+                />
+            )}
+
 
             <SupportButton isVisible={isSupportButtonVisible} />
 
