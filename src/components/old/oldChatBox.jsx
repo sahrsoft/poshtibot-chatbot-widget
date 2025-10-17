@@ -1,83 +1,62 @@
 'use client'
 
 import Image from "next/image"
-import { useEffect, useState, useRef, useCallback } from "react"
+import { useEffect, useState, useRef, useCallback, memo } from "react"
 import { Box, Typography, TextField, IconButton, Popover, List, ListItem, ListItemText, ListItemIcon } from "@mui/material"
 import { Icon } from '@iconify/react'
 import { AnimatePresence, motion } from 'framer-motion'
 import EmojiPicker from "emoji-picker-react"
 import { useChat } from "@/hooks/useChat"
-import { usePoshtibotSetup } from "./usePoshtibotSetup"
+import { usePoshtibotSetup } from "../../hooks/usePoshtibotSetup"
 
-export default function ChatWidget() {
-    // const DEFAULT_BOT_MESSAGE = { sender: "poshtibot", message: "سلام، چطور می تونم کمک‌تون کنم؟" }
+const ChatWidget = () => {
 
-    // const [allMessages, setAllMessages] = useState([DEFAULT_BOT_MESSAGE])
     const [input, setInput] = useState("")
-    // const [config, setConfig] = useState({})
     const [notifications, setNotifications] = useState(true)
     const [anchorEl, setAnchorEl] = useState(null)
-    // const [conversationId, setConversationId] = useState(null)
-    // const [userId, setUserId] = useState(null)
-    const [typing, setTyping] = useState(false)
     const [botTypingText, setBotTypingText] = useState('')
     const [showSupportBtn, setShowSupportBtn] = useState(true)
+    const [showInitMsg, setShowInitMsg] = useState(true)
 
     const chatEndRef = useRef(null)
     const fileInputRef = useRef(null)
 
     const { config, conversationId, userId, allMessages, setAllMessages } = usePoshtibotSetup()
 
-    const { joinGroup, sendUser, messages } = useChat({ userId })
-
-
-
-    // Load config and restore saved chat once
-    // useEffect(() => {
-    //     try {
-    //         const conversationData = JSON.parse(localStorage.getItem("poshtibot-conversation-data") || "{}")
-    //         setConversationId(conversationData.poshtibot_conversation_id)
-    //         setUserId(conversationData.poshtibot_user_id)
-
-    //         const pwc = JSON.parse(localStorage.getItem("poshtibot-widget-config"))
-    //         setConfig(pwc)
-
-    //         const savedMessages = JSON.parse(localStorage.getItem("poshtibot-messages") || "[]")
-    //         setAllMessages(savedMessages.length > 0 ? savedMessages : [DEFAULT_BOT_MESSAGE])
-    //     } catch (err) {
-    //         console.error("Error loading chat data:", err)
-    //         setAllMessages([DEFAULT_BOT_MESSAGE])
-    //     }
-    // }, [])
-
-    // console.log(config)
+    const { sendUser, messages, typingUsers, isTyping } = useChat({ userId })
 
     // Sync new messages coming from socket/chat
     useEffect(() => {
         if (!messages?.length) return
 
         setAllMessages(prev => {
-            const seen = new Set(prev.map(m => JSON.stringify(m)))
-            const newOnes = messages.filter(m => !seen.has(JSON.stringify(m)))
+            // More efficient comparison
+            if (prev.length === messages.length &&
+                prev[prev.length - 1]?.id === messages[messages.length - 1]?.id) {
+                return prev // No changes
+            }
+            const seen = new Set(prev.map(m => JSON.stringify(m.id)))
+            const newOnes = messages.filter(m => !seen.has(JSON.stringify(m.id)))
+            if (newOnes.length === 0) return prev
             const merged = [...prev, ...newOnes]
             localStorage.setItem("poshtibot-messages", JSON.stringify(merged))
             return merged
         })
 
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }, [messages])
+    }, [messages, setAllMessages])
 
     // Scroll to bottom whenever messages change
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }, [allMessages])
+    }, [allMessages, isTyping])
 
     // Send user message
     const sendMessage = useCallback(() => {
         const trimmed = input.trim()
         if (!trimmed) return
 
-        const newMsg = { sender: "user", message: trimmed }
+        const newMsg = { sender: "user", message: trimmed, id: Date.now() }
         setAllMessages(prev => {
             const updated = [...prev, newMsg]
             localStorage.setItem("poshtibot-messages", JSON.stringify(updated))
@@ -85,9 +64,8 @@ export default function ChatWidget() {
         })
 
         setInput("")
-        joinGroup(conversationId)
         sendUser(config.user_flows_data, conversationId, trimmed)
-    }, [input, conversationId, config, joinGroup, sendUser])
+    }, [input, conversationId, config, sendUser, setAllMessages])
 
     // const handleFileUpload = (e) => {
     //     const file = e.target.files?.[0]
@@ -110,12 +88,19 @@ export default function ChatWidget() {
         { id: '4', message: 'وضعیت سفارش من', enabled: true },
         { id: '5', message: 'وضعیت سفارش من', enabled: true },
     ]
-    const hasUserMessage = allMessages.some(msg => msg.sender === 'user')
+    // const hasUserMessage = allMessages.some(msg => msg.sender === 'user')
 
     // Starter click shortcut
     const handleStarterClick = (starterText) => {
-        setInput(starterText)
-        sendMessage()
+        const newMsg = { sender: "user", message: starterText, id: Date.now() }
+        setAllMessages(prev => {
+            const updated = [...prev, newMsg]
+            localStorage.setItem("poshtibot-messages", JSON.stringify(updated))
+            return updated
+        })
+
+        setShowInitMsg(false)
+        sendUser(config.user_flows_data, conversationId, starterText)
     }
 
     // Notification toggle
@@ -134,6 +119,8 @@ export default function ChatWidget() {
             </div>
         )
     }
+
+    console.log(config.enable_agent_handoff)
 
 
     return (
@@ -216,15 +203,17 @@ export default function ChatWidget() {
                     </motion.div>
                 ))}
 
-                {/* {!typing && (
+                {isTyping && (
                     <Box display="flex" justifyContent="flex-end">
                         <Box
                             sx={{
                                 maxWidth: { xs: '75%', sm: '70%' },
                                 px: 2,
-                                py: 1.5,
-                                borderRadius: '20px',
-                                background: '#f5f9f9',
+                                pt: 1,
+                                pb: .5,
+                                mb: 3,
+                                borderRadius: 2,
+                                // background: '#f5f9f9',
                                 fontSize: { xs: '13px', sm: '14px' },
                                 color: '#20403c',
                             }}
@@ -236,14 +225,14 @@ export default function ChatWidget() {
                             )}
                         </Box>
                     </Box>
-                )} */}
+                )}
 
                 <div ref={chatEndRef} />
             </Box>
 
             {/* Support button */}
             <AnimatePresence>
-                {allMessages.length % 9 === 0 && showSupportBtn && (
+                {config.enable_agent_handoff === 1 && (allMessages.filter(msg => msg.sender === "user")).length % 4 === 0 && showSupportBtn && config.enable_agent_handoff && (
                     <motion.div
                         key="support-btn"
                         initial={{ opacity: 0, y: 40, scale: 0.9 }}
@@ -277,7 +266,7 @@ export default function ChatWidget() {
 
             {/* Input area */}
             <Box sx={{ px: 1, py: 1, borderTop: '1px solid #e3eded', bgcolor: '#fff' }}>
-                {!hasUserMessage && allMessages.length < 9 && conversationStarters.filter(starter => starter.enabled && starter.message.trim()).length > 0 && (
+                {showInitMsg && conversationStarters.filter(starter => starter.enabled && starter.message.trim()).length > 0 && (
                     <Box
                         sx={{
                             width: '100%',
@@ -338,6 +327,7 @@ export default function ChatWidget() {
                     </IconButton>
 
                     <TextField
+                        disabled={isTyping}
                         className='light-bg-input-autofill'
                         size="small"
                         variant="outlined"
@@ -423,3 +413,5 @@ export default function ChatWidget() {
         </Box>
     )
 }
+
+export default ChatWidget

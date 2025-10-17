@@ -9,7 +9,7 @@ export function usePoshtibotSetup() {
     const [allMessages, setAllMessages] = useState([DEFAULT_BOT_MESSAGE])
 
     useEffect(() => {
-        let intervalId= null
+        let intervalId = null
 
         const loadFromLocalStorage = () => {
             try {
@@ -31,10 +31,14 @@ export function usePoshtibotSetup() {
             return false
         }
 
-        // 1️⃣ Try immediately
+        // 1️. Try immediately
         const loaded = loadFromLocalStorage()
 
-        // 2️⃣ If not found, poll for a short time (e.g., up to 5s)
+        // const loaded = setTimeout(() => {
+        //     loadFromLocalStorage()
+        // }, 500)
+
+        // 2️. If not found, poll for a short time (e.g., up to 5s)
         if (!loaded) {
             let tries = 0
             intervalId = setInterval(() => {
@@ -45,23 +49,23 @@ export function usePoshtibotSetup() {
             }, 500)
         }
 
-        // 3️⃣ Listen for postMessage updates from parent
-        const handleMessage = (event) => {
-            if (event.data?.type === "POSHTIBOT_CONFIG" && event.data.data) {
-                const data = event.data.data
-                setConfig(data)
-                localStorage.setItem("poshtibot-widget-config", JSON.stringify(data))
-                // Optional: reload other data when config arrives
-                loadFromLocalStorage()
-            }
-        }
+        // 3️. Listen for postMessage updates from parent
+        // const handleMessage = (event) => {
+        //     if (event.data?.type === "POSHTIBOT_CONFIG" && event.data.data) {
+        //         const data = event.data
+        //         setConfig(data)
+        //         localStorage.setItem("poshtibot-widget-config", JSON.stringify(data))
+        //         // Optional: reload other data when config arrives
+        //         loadFromLocalStorage()
+        //     }
+        // }
 
-        window.addEventListener("message", handleMessage)
+        // window.addEventListener("message", handleMessage)
 
-        return () => {
-            if (intervalId) clearInterval(intervalId)
-            window.removeEventListener("message", handleMessage)
-        }
+        // return () => {
+        //     if (intervalId) clearInterval(intervalId)
+        // window.removeEventListener("message", handleMessage)
+        // }
     }, [])
 
     return { config, conversationId, userId, allMessages, setAllMessages }
