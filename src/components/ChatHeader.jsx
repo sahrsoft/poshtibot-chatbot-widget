@@ -9,7 +9,7 @@ const ChatHeader = ({ notifications, onToggleNotifications, onCloseChat }) => {
     return (
         <Box
             sx={{
-                background: 'rgb(0, 210, 133)',
+                background: '#00d285',
                 color: '#fff',
                 pt: 3,
                 pb: 2,

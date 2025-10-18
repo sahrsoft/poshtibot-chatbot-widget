@@ -6,9 +6,9 @@ import { Icon } from '@iconify/react'
 
 const ConversationStarters = ({ starters, onStarterClick }) => {
     // Filter enabled starters once
-    const enabledStarters = starters.filter(s => s.enable && s.message.trim())
+    const enabledStarters = starters?.filter(s => s.enable && s.message.trim())
 
-    if (enabledStarters.length === 0) {
+    if (enabledStarters?.length === 0) {
         return null // Don't render anything if there are no valid starters
     }
 
@@ -33,7 +33,7 @@ const ConversationStarters = ({ starters, onStarterClick }) => {
             }}
         >
             <List sx={{ p: 0, ml: .5 }}>
-                {enabledStarters.map((starter, index) => (
+                {enabledStarters?.map((starter, index) => (
                     <ListItem
                         key={index}
                         onClick={() => onStarterClick(starter.message)}

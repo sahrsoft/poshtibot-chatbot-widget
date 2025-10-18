@@ -9,12 +9,13 @@ import MessageList from "./MessageList"
 import ConversationStarters from "./ConversationStarters"
 import SupportButton from "./SupportButton"
 import ChatInput from "./ChatInput"
-import { LOCAL_STORAGE_MESSAGES_KEY } from "@/lib/constants"
 import CollectLeads from "./CollectLeads"
+import { LOCAL_STORAGE_CONVERSATION_KEY, LOCAL_STORAGE_MESSAGES_KEY } from "@/lib/constants"
 
 const ChatWidget = () => {
     const [notifications, setNotifications] = useState(true)
     const [showInitMsg, setShowInitMsg] = useState(true)
+    const [leadsStatus, setLeadsStatus] = useState()
 
     const chatEndRef = useRef(null)
 
@@ -40,6 +41,15 @@ const ChatWidget = () => {
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [allMessages, isTyping])
+
+    useEffect(() => {
+        const conversationData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CONVERSATION_KEY))
+        if ((config?.leads_from_name || config?.leads_from_email || config?.leads_from_mobile) &&
+            (!conversationData.leads_collected)) {
+            setLeadsStatus(true)
+        }
+    }, [config])
+
 
     // Memoized callback for sending a message
     const handleSendMessage = useCallback((messageText) => {
@@ -69,47 +79,51 @@ const ChatWidget = () => {
     // Memoize the calculation for showing the support button
     const isSupportButtonVisible = useMemo(() => {
         const userMessageCount = allMessages.filter(msg => msg.sender === "user").length
-        return config?.enable_agent_handoff === 1 && userMessageCount > 0 && userMessageCount % 4 === 0
+        return config?.agent_handoff === 1 && userMessageCount > 0 && userMessageCount % 4 === 0
     }, [allMessages, config])
+
+    // const leadsStatus = (config?.leads_from_name || config?.leads_from_email || config?.leads_from_mobile) && ()
+
 
     if (!config) {
         return <Box sx={{ p: 4, textAlign: "center" }}>در حال بارگذاری...</Box>
     }
 
     return (
-        <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#fff' }}>
+        <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', backgroundImage: 'linear-gradient(0deg, rgba(0,0,0,0.5), rgba(0,0,0,0.8)),url(./images/widgetBg1.jpg)', backgroundSize: 'cover' }}>
             <ChatHeader
                 notifications={notifications}
                 onToggleNotifications={toggleNotifications}
                 onCloseChat={handleCloseChat}
             />
 
-            {config?.enable_collect_leads ? (
-                <CollectLeads />
+            {leadsStatus ? (
+                <CollectLeads config={config} />
             ) : (
-                <MessageList
-                    allMessages={allMessages}
-                    isTyping={isTyping}
-                    chatEndRef={chatEndRef}
-                />
-            )}
-
-
-            <SupportButton isVisible={isSupportButtonVisible} />
-
-            <Box sx={{ px: .5, borderTop: '1px solid #e3eded', bgcolor: '#fff' }}>
-                {showInitMsg && (
-                    <ConversationStarters
-                        starters={conversationStarters}
-                        onStarterClick={handleStarterClick}
+                <>
+                    <MessageList
+                        allMessages={allMessages}
+                        isTyping={isTyping}
+                        chatEndRef={chatEndRef}
                     />
-                )}
 
-                <ChatInput
-                    isTyping={isTyping}
-                    onSendMessage={handleSendMessage}
-                />
-            </Box>
+                    <SupportButton isVisible={isSupportButtonVisible} />
+
+                    <Box sx={{ px: .5, borderTop: '1px solid #e3eded', bgcolor: '#fff' }}>
+                        {showInitMsg && (
+                            <ConversationStarters
+                                starters={conversationStarters}
+                                onStarterClick={handleStarterClick}
+                            />
+                        )}
+
+                        <ChatInput
+                            isTyping={isTyping}
+                            onSendMessage={handleSendMessage}
+                        />
+                    </Box>
+                </>
+            )}
         </Box>
     )
 }

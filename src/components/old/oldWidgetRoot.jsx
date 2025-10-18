@@ -51,8 +51,7 @@ export default function WidgetRoot({ chatbotId }) {
                     logo_url: "",
                     widget_position: "right",
                     user_flows_data: "",
-                    enable_collect_leads: 0,
-                    enable_agent_handoff: 0
+                    agent_handoff: 0
                 })
             }
         }

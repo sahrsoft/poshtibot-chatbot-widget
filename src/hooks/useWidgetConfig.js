@@ -18,6 +18,8 @@ export function useWidgetConfig(chatbotId) {
     // 1. Use lazy initialization for state from localStorage.
     // This function only runs ONCE on the initial render.
     const [config, setConfig] = useState(() => {
+        if (typeof window === "undefined") return // Prevent SSR issues
+
         try {
             const cachedConfig = localStorage.getItem(LOCAL_STORAGE_CONFIG_KEY)
             return cachedConfig ? JSON.parse(cachedConfig) : DEFAULT_CONFIG
@@ -28,6 +30,8 @@ export function useWidgetConfig(chatbotId) {
     })
 
     const [starterMessages, setStarterMessages] = useState(() => {
+        if (typeof window === "undefined") return // Prevent SSR issues
+
         try {
             const cachedStarter = localStorage.getItem(LOCAL_STORAGE_STARTER_KEY)
             return cachedStarter ? JSON.parse(cachedStarter) : []
@@ -37,14 +41,15 @@ export function useWidgetConfig(chatbotId) {
         }
     })
 
+
     useEffect(() => {
         if (!chatbotId) return
 
         const fetchConfig = async () => {
             try {
                 const res = await fetch(
-                    `https://server.poshtibot.com/api/method/poshtibot.api.get_widget_config?chatbot_id=${chatbotId}`
-                );
+                    `${process.env.NEXT_PUBLIC_API_URL}/get_widget_config?chatbot_id=${chatbotId}`
+                )
                 if (!res.ok) {
                     throw new Error(`API request failed with status ${res.status}`)
                 }
@@ -56,9 +61,12 @@ export function useWidgetConfig(chatbotId) {
                         localStorage.setItem(LOCAL_STORAGE_CONFIG_KEY, JSON.stringify(data.message.widget_config))
                     }
 
-                    if (data?.message?.starter_messages) {
+                    if (data?.message?.starter_messages && data?.message?.starter_messages != null) {
                         setStarterMessages(data.message.starter_messages)
                         localStorage.setItem(LOCAL_STORAGE_STARTER_KEY, JSON.stringify(data.message.starter_messages))
+                    } else {
+                        setStarterMessages([])
+                        localStorage.setItem(LOCAL_STORAGE_STARTER_KEY, "[]")
                     }
                 } else {
                     // If the API returns a valid but empty response, use default.

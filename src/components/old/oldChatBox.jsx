@@ -121,7 +121,7 @@ const ChatWidget = () => {
         )
     }
 
-    console.log(config.enable_agent_handoff)
+    console.log(config.agent_handoff)
 
 
     return (
@@ -233,7 +233,7 @@ const ChatWidget = () => {
 
             {/* Support button */}
             <AnimatePresence>
-                {config.enable_agent_handoff === 1 && (allMessages.filter(msg => msg.sender === "user")).length % 4 === 0 && showSupportBtn && config.enable_agent_handoff && (
+                {config.agent_handoff === 1 && (allMessages.filter(msg => msg.sender === "user")).length % 4 === 0 && showSupportBtn && config.agent_handoff && (
                     <motion.div
                         key="support-btn"
                         initial={{ opacity: 0, y: 40, scale: 0.9 }}
