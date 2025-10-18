@@ -1,96 +1,118 @@
 "use client"
 
 import { useEffect, useRef, useState, useCallback } from "react"
-import GetSocket from "@/utils/socket/Socket"
+import getSocket from "@/utils/socket/Socket"
 
-
-export function useChat({ userId }) {
+export function useChat({ userId, conversationId }) {
   const [messages, setMessages] = useState([])
+  const [typingUsers, setTypingUsers] = useState([])
+  const [pendingForAgent, setPendingForAgent] = useState(false)
 
   const socketRef = useRef(null)
 
-  // Initialize socket & common listeners once (safe)
+  // Initialize socket and listeners
   useEffect(() => {
-    const socket = GetSocket()
+    if (!userId || !conversationId) return
+
+    // Get the singleton socket instance
+    const socket = getSocket(userId)
     socketRef.current = socket
 
-    if (!socket) return
+    // This handler runs on the *initial* connection AND *every* reconnection.
+    const onConnect = () => {
+      console.log(`Socket connected: ${socket.id}. Joining room: ${conversationId}`)
+      socket.emit("join_room", conversationId)
 
-    socket.on("connect", () => {
-      console.log("Socket connected:", socket.id)
-      console.log("Socket connected:", socket.connect())
-    })
+      socket.emit("register", userId)
+    }
 
-    const onPrivate = (msg) => setMessages(prev => [...prev, { ...msg, type: "private" }])
-    const onGroup = (msg) => setMessages(prev => [...prev, { ...msg, type: "group" }])
-    const onUser = (msg) => setMessages(prev => [...prev, { ...msg, type: "user" }])
-    const onSaved = (m) => console.debug("message:saved", m)
-    const onError = (e) => console.error("socket error", e)
+    const onError = (error) => console.error("Socket error:", error)
 
-    socket.on("message:private", onPrivate)
-    socket.on("message:group", onGroup)
-    socket.on("message:user", onUser)
-    socket.on("message:saved", onSaved)
+    const onPoshtibotMessage = (message) => {
+      const newMessage = { message, sender: "poshtibot", id: Date.now() }
+      setMessages((prev) => [...prev, newMessage])
+    }
+
+    const onRequestForAgent = (msg) => {
+      console.log(msg)
+      setPendingForAgent(true)
+    }
+
+    // --- Typing Indicator Handlers ---
+    const onUserTyping = ({ userId: typingUserId }) => {
+      setTypingUsers((prev) =>
+        prev.includes(typingUserId) ? prev : [...prev, typingUserId]
+      )
+    }
+
+    // The logic is now correct. It only stops "typing" if no one is left.
+    const onUserStopTyping = ({ userId: typingUserId }) => {
+      setTypingUsers((prev) => prev.filter((id) => id !== typingUserId))
+    }
+
+    // --- Debug Listeners (Good to keep) ---
+    const onDisconnect = (reason) => console.log('Disconnected:', reason)
+    const onReconnectAttempt = (attempt) => console.log(`Reconnection attempt ${attempt}`)
+    const onReconnect = (attempt) => console.log(`Successfully reconnected after ${attempt} attempts`)
+
+    socket.on("connect", onConnect)
     socket.on("message:error", onError)
+    socket.on("message:poshtibot", onPoshtibotMessage)
+    socket.on("message:request_for_agent", onRequestForAgent)
+    socket.on("user_typing", onUserTyping)
+    socket.on("user_stop_typing", onUserStopTyping)
+    socket.on('disconnect', onDisconnect)
+    socket.on('reconnect_attempt', onReconnectAttempt)
+    socket.on('reconnect', onReconnect)
+
+    // If the socket is already connected when this effect runs,
+    // (e.g., `conversationId` changed), manually call onConnect.
+    if (socket.connected) {
+      onConnect()
+    }
+
+    // Cleanup listeners on component unmount
     return () => {
-      socket.off("message:private", onPrivate)
-      socket.off("message:group", onGroup)
-      socket.off("message:user", onUser)
-      socket.off("message:saved", onSaved)
+      socket.off("connect", onConnect)
       socket.off("message:error", onError)
+      socket.off("message:poshtibot", onPoshtibotMessage)
+      socket.off("message:request_for_agent", onRequestForAgent)
+      socket.off("user_typing", onUserTyping)
+      socket.off("user_stop_typing", onUserStopTyping)
+      socket.off('disconnect', onDisconnect)
+      socket.off('reconnect_attempt', onReconnectAttempt)
+      socket.off('reconnect', onReconnect)
     }
-  }, []) // run once
+  }, [conversationId, userId])
 
-  // Register user when userId becomes available
-  useEffect(() => {
-    const socket = socketRef.current;
-    if (!socket) return;
-    if (!userId) return; // wait until userId exists
 
-    socket.emit("register", userId);
-    // DON'T send secrets from client in production. Prefer server-side auth.
-    // If you *must* send keys, do socket.emit("auth_keys", { apiKey, apiSecret }) carefully.
-
-    // no cleanup needed for register
-  }, [userId])
-
-  const sendPrivate = useCallback((receiver, message) => {
+  const sendUserMessage = useCallback((userFlowsData, conversationId, message) => {
     const socket = socketRef.current
-    if (!socket || !userId) {
-      console.warn("Cannot send private — socket or userId missing")
+    if (!socket || !userId || !conversationId) {
+      console.warn("Cannot send message: socket, userId, or conversationId is missing.")
       return
     }
-    socket.emit("private_message", { sender: userId, receiver, message })
-    setMessages(prev => [...prev, { sender: userId, receiver, message, type: "private", local: true }])
+
+    socket.emit("user_message", {
+      user_flows_data: userFlowsData,
+      conversation_id: conversationId,
+      message
+    })
   }, [userId])
 
-  const joinGroup = useCallback((groupId) => {
+  const requestForAgent = useCallback((conversationId) => {
     const socket = socketRef.current
-    if (!socket || !userId) return
-    socket.emit("join_room", groupId)
-  }, [userId])
-
-  const sendGroup = useCallback((userFlowsData, conversationId, message) => {
-    console.log(userFlowsData, conversationId, message)
-    const socket = socketRef.current
-    if (!socket || !userId) {
-      console.warn("Cannot send group — socket or userId missing")
+    if (!socket || !userId || !conversationId) {
+      console.warn("Cannot send message: socket, userId, or conversationId is missing.")
       return
     }
-    socket.emit("group_message", { user_flows_data: userFlowsData, conversation_id:conversationId, message })
-    setMessages(prev => [...prev, { sender: "Agent", chat_room: conversationId, message, type: "group", local: true }])
+
+    socket.emit("request_for_agent", {
+      conversation_id: conversationId
+    })
   }, [userId])
 
-  const sendUser = useCallback((userFlowsData, conversationId, message) => {
-    console.log(userFlowsData, conversationId, message)
-    const socket = socketRef.current
-    if (!socket || !userId ) {
-      console.warn("Cannot send group — socket or userId missing")
-      return
-    }
-    socket.emit("user_message", { user_flows_data: userFlowsData, conversation_id:conversationId, message })
-    setMessages(prev => [...prev, { sender: "User", chat_room: conversationId, message, type: "user", local: true }])
-  }, [userId])
+  const isTyping = typingUsers.length > 0
 
-  return { messages, sendPrivate, sendGroup, sendUser, joinGroup }
+  return { messages, sendUserMessage, requestForAgent, isTyping, typingUsers, pendingForAgent }
 }

@@ -10,7 +10,7 @@ import { useChat } from "@/hooks/useChat"
 import { v4 as uuidv4 } from 'uuid'
 
 export default function ChatWidget() {
-    const [messages, setMessages] = useState([{ from: "bot", text: "سلام، چطور می تونم کمک تون کنم؟" }])
+    const [allMessages, setAllMessages] = useState([{ sender: "poshtibot", message: "سلام، چطور می تونم کمک تون کنم؟" }])
     const [input, setInput] = useState("")
     const [config, setConfig] = useState({})
     const [notifications, setNotifications] = useState(true)
@@ -21,6 +21,8 @@ export default function ChatWidget() {
     const [botTypingText, setBotTypingText] = useState('')
     const [anchorEl, setAnchorEl] = useState(null)
     const [showSupportBtn, setShowSupportBtn] = useState(true)
+
+    console.log(allMessages)
 
 
     const id = anchorEl ? 'emoji-popover' : undefined
@@ -37,26 +39,33 @@ export default function ChatWidget() {
         setConfig(pwc)
 
         const messages = JSON.parse(localStorage.getItem("poshtibot-messages"))
-        if (messages) setMessages(messages)
+        if (messages) {
+            setAllMessages(messages)
+        } else {
+            setAllMessages([{ sender: "poshtibot", message: "سلام، چطور می تونم کمک تون کنم؟" }])
+        }
 
     }, [])
 
+    const { joinGroup, sendUser, messages } = useChat({ userId })
     useEffect(() => {
         chatEndRef?.current?.scrollIntoView({ behavior: 'smooth' })
+
+        const newMessages = [...messages, { sender: "poshtibot", message: messages.message }]
+        setAllMessages(newMessages)
     }, [messages, typing])
 
-    const { sendUser, joinGroup } = useChat({ userId })
 
     const conversationStarters = [
-        { id: '1', text: 'در مورد محصولات سوال دارم', enabled: true },
-        { id: '2', text: 'وضعیت سفارش من', enabled: true },
+        { id: '1', message: 'در مورد محصولات سوال دارم', enabled: true },
+        { id: '2', message: 'وضعیت سفارش من', enabled: true },
     ]
 
-    const hasUserMessage = messages.some(msg => msg.from === 'user')
+    const hasUserMessage = allMessages.some(msg => msg.sender === 'user')
 
     const handleStarterClick = (starterText) => {
-        const newMessages = [...messages, { from: "user", text: starterText }]
-        setMessages(newMessages)
+        const newMessages = [...allMessages, { sender: "user", message: starterText }]
+        setAllMessages(newMessages)
         setInput("")
         joinGroup(conversationId)
         sendUser(config.user_flows_data, conversationId, starterText)
@@ -68,25 +77,27 @@ export default function ChatWidget() {
     }
 
     const handleEmojiButtonClick = (e) => setAnchorEl(e.currentTarget)
+
     const handleClosePopover = () => setAnchorEl(null)
+
     const handleEmojiClick = (emoji) => {
         const ch = emoji?.native || emoji?.emoji || (typeof emoji === 'string' ? emoji : '')
         setInput(prev => prev + ch)
         setAnchorEl(null)
     }
-    const handleFileUpload = (e) => {
-        const file = e.target.files?.[0]
-        if (!file) return
-        const url = URL.createObjectURL(file)
-        setMessages(prev => [...prev, { from: 'user', text: `file: ${file.name}`, file: url, timestamp: Date.now() }])
-    }
+    // const handleFileUpload = (e) => {
+    //     const file = e.target.files?.[0]
+    //     if (!file) return
+    //     const url = URL.createObjectURL(file)
+    //     setAllMessages(prev => [...prev, { sender: 'user', message: `file: ${file.name}`, file: url, timestamp: Date.now() }])
+    // }
 
     const sendMessage = async () => {
         if (!input.trim()) return
 
         // Add user message immediately
-        const newMessages = [...messages, { from: "user", text: input }]
-        setMessages(newMessages)
+        const newMessages = [...messages, { sender: "user", message: input }]
+        setAllMessages(newMessages)
         setInput("")
 
         joinGroup(conversationId)
@@ -192,7 +203,7 @@ export default function ChatWidget() {
                     gap: 1.5,
                 }}
             >
-                {messages?.map((msg, index) => (
+                {allMessages?.map((msg, index) => (
                     <motion.div
                         key={index}
                         initial={{ opacity: 0, y: 10 }}
@@ -200,7 +211,7 @@ export default function ChatWidget() {
                         transition={{ duration: 0.3 }}
                         style={{
                             display: 'flex',
-                            justifyContent: msg.from === 'user' ? 'flex-start' : 'flex-end',
+                            justifyContent: msg.sender === 'user' ? 'flex-start' : 'flex-end',
                         }}
                     >
                         <Box
@@ -209,9 +220,9 @@ export default function ChatWidget() {
                                 px: 2,
                                 pt: 1,
                                 pb: 1,
-                                // borderRadius: msg.from === 'user' ? '35px 35px 0 35px ' : '35px 35px 35px 0',
+                                // borderRadius: msg.sender === 'user' ? '35px 35px 0 35px ' : '35px 35px 35px 0',
                                 borderRadius: 2,
-                                background: msg.from === 'user' ? '#a3f5c4' : '#f5f9f9',
+                                background: msg.sender === 'user' ? '#a3f5c4' : '#f5f9f9',
                                 fontSize: { xs: '14px', sm: '15px' },
                                 color: 'black',
                             }}
@@ -219,13 +230,13 @@ export default function ChatWidget() {
                             {msg.file ? (
                                 <a
                                     href={msg.file}
-                                    download={msg.text.split(': ')[1]}
+                                    download={msg.message.split(': ')[1]}
                                     style={{ color: '#0a3e38', textDecoration: 'underline' }}
                                 >
-                                    {msg.text}
+                                    {msg.message}
                                 </a>
                             ) : (
-                                msg.text
+                                msg.message
                             )}
                             {/* <Typography variant="caption" sx={{ display: 'block', textAlign: 'left', mt: 0.5, opacity: 0.7 }}>
                                 {formatTimestamp(msg.timestamp)}
@@ -259,7 +270,7 @@ export default function ChatWidget() {
             </Box>
 
             <AnimatePresence>
-                {messages.length % 9 == 0 && showSupportBtn && (
+                {allMessages.length % 9 == 0 && showSupportBtn && (
                     <motion.div
                         key="support-btn"
                         initial={{ opacity: 0, y: 40, scale: 0.9 }}
@@ -309,7 +320,7 @@ export default function ChatWidget() {
                     bgcolor: '#fff',
                 }}
             >
-                {!hasUserMessage && messages.length < 9 && conversationStarters.filter(starter => starter.enabled && starter.text.trim()).length > 0 && (
+                {!hasUserMessage && allMessages.length < 9 && conversationStarters.filter(starter => starter.enabled && starter.message.trim()).length > 0 && (
                     <Box
                         sx={{
                             width: '100%',
@@ -331,10 +342,10 @@ export default function ChatWidget() {
                         }}
                     >
                         <List sx={{ p: 0, ml: .5 }}>
-                            {conversationStarters.filter(starter => starter.enabled && starter.text.trim()).map((starter) => (
+                            {conversationStarters.filter(starter => starter.enabled && starter.message.trim()).map((starter) => (
                                 <ListItem
                                     key={starter.id}
-                                    onClick={() => handleStarterClick(starter.text)}
+                                    onClick={() => handleStarterClick(starter.message)}
                                     sx={{
                                         px: 1,
                                         py: .5,
@@ -354,7 +365,7 @@ export default function ChatWidget() {
                                         <ListItemText
                                             primary={
                                                 <Typography sx={{ color: 'black', fontSize: 14, textAlign: 'right' }}>
-                                                    {starter.text}
+                                                    {starter.message}
                                                 </Typography>
                                             }
                                         />
@@ -401,7 +412,14 @@ export default function ChatWidget() {
                             },
                         }}
                     />
-                    {!input ? (
+                    <IconButton type="submit" sx={{ p: 0.5 }} disabled={!input.trim()}>
+                        <Icon icon="fa6-brands:telegram" fontSize={32} style={{ color: input ? "rgb(0, 210, 133)" : "" }} />
+                    </IconButton>
+                    {/* {input ? (
+                        <IconButton type="submit" sx={{ p: 0.5 }}>
+                            <Icon icon="fa6-brands:telegram" fontSize={32} style={{ color: 'rgb(0, 210, 133)' }} />
+                        </IconButton>
+                    ) : (
                         <IconButton onClick={() => fileInputRef.current.click()} sx={{
                             p: 1.25, border: '1px solid #e3eded', '&:hover': {
                                 borderColor: 'rgb(0, 210, 133)'
@@ -409,22 +427,18 @@ export default function ChatWidget() {
                         }}>
                             <Icon icon="solar:paperclip-linear" width="20" height="20" style={{ color: '#577e7d' }} />
                         </IconButton>
-                    ) : (
-                        <IconButton type="submit" sx={{ p: 0.5 }}>
-                            <Icon icon="fa6-brands:telegram" fontSize={32} style={{ color: 'rgb(0, 210, 133)' }} />
-                        </IconButton>
-                    )}
+                    )} */}
                 </Box>
 
                 <Box display="flex" justifyContent="center" alignItems="center" mt={0.5}>
-                    <Box display="flex" gap={0.5}>
+                    {/* <Box display="flex" gap={0.5}>
                         <input
                             type="file"
                             ref={fileInputRef}
                             style={{ display: 'none' }}
                             onChange={handleFileUpload}
                         />
-                    </Box>
+                    </Box> */}
                     <Typography sx={{ color: '#577e7d', fontSize: { xs: 11, sm: 12 }, pt: 1 }}>
                         قدرت گرفته از پشتیبات 💚
                     </Typography>

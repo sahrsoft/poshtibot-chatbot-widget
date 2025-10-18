@@ -1,8 +1,8 @@
-import ChatBox from "@/components/ChatBox"
+import ChatWidget from "@/components/ChatWidget"
 
 const page = () => {
     return (
-        <ChatBox />
+        <ChatWidget />
     )
 }
 
