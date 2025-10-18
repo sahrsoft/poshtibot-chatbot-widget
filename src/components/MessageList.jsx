@@ -1,7 +1,7 @@
 'use client'
 
 import { memo } from 'react'
-import { Box, Typography } from '@mui/material'
+import { Box } from '@mui/material'
 import { motion } from 'framer-motion'
 import { Icon } from '@iconify/react'
 
@@ -68,10 +68,10 @@ const MessageList = ({ allMessages, isTyping, chatEndRef }) => {
                         sx={{
                             px: 2,
                             pt: 1,
-                            pb: .5,
                             mb: 3,
                             borderRadius: 2,
-                            color: '#20403c'
+                            color: '#20403c',
+                            bgcolor: '#fff'
                         }}
                     >
                         <Icon icon="svg-spinners:3-dots-fade" width="24" height="24" />

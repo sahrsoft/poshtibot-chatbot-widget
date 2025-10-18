@@ -11,13 +11,20 @@ export function useChat({ userId, conversationId }) {
 
   // Initialize socket and listeners
   useEffect(() => {
-    if (!userId) return
+    if (!userId || !conversationId) return
 
     // Get the singleton socket instance
-    const socket = getSocket()
+    const socket = getSocket(userId)
     socketRef.current = socket
 
-    const onConnect = () => console.log("Socket connected:", socket.id)
+    // This handler runs on the *initial* connection AND *every* reconnection.
+    const onConnect = () => {
+      console.log(`Socket connected: ${socket.id}. Joining room: ${conversationId}`)
+      socket.emit("join_room", conversationId)
+
+      socket.emit("register", userId)
+    }
+
     const onError = (error) => console.error("Socket error:", error)
 
     const onPoshtibotMessage = (message) => {
@@ -37,11 +44,25 @@ export function useChat({ userId, conversationId }) {
       setTypingUsers((prev) => prev.filter((id) => id !== typingUserId))
     }
 
+    // --- Debug Listeners (Good to keep) ---
+    const onDisconnect = (reason) => console.log('Disconnected:', reason)
+    const onReconnectAttempt = (attempt) => console.log(`Reconnection attempt ${attempt}`)
+    const onReconnect = (attempt) => console.log(`Successfully reconnected after ${attempt} attempts`)
+
     socket.on("connect", onConnect)
     socket.on("message:error", onError)
     socket.on("message:poshtibot", onPoshtibotMessage)
     socket.on("user_typing", onUserTyping)
     socket.on("user_stop_typing", onUserStopTyping)
+    socket.on('disconnect', onDisconnect)
+    socket.on('reconnect_attempt', onReconnectAttempt)
+    socket.on('reconnect', onReconnect)
+
+    // If the socket is already connected when this effect runs,
+    // (e.g., `conversationId` changed), manually call onConnect.
+    if (socket.connected) {
+      onConnect()
+    }
 
     // Cleanup listeners on component unmount
     return () => {
@@ -50,26 +71,15 @@ export function useChat({ userId, conversationId }) {
       socket.off("message:poshtibot", onPoshtibotMessage)
       socket.off("user_typing", onUserTyping)
       socket.off("user_stop_typing", onUserStopTyping)
-    }
-  }, [userId])
-
-  // Join the room once when conversationId is available
-  useEffect(() => {
-    const socket = socketRef.current
-    if (!socket) return
-    if (!userId) return
-
-    socket.emit("register", userId)
-
-    if (socketRef.current && conversationId) {
-      console.log(`Joining room: ${conversationId}`)
-      socketRef.current.emit("join_room", conversationId)
+      socket.off('disconnect', onDisconnect)
+      socket.off('reconnect_attempt', onReconnectAttempt)
+      socket.off('reconnect', onReconnect)
     }
   }, [conversationId, userId])
 
 
   const sendUserMessage = useCallback((userFlowsData, conversationId, message) => {
-    const socket = socketRef.current;
+    const socket = socketRef.current
     if (!socket || !userId || !conversationId) {
       console.warn("Cannot send message: socket, userId, or conversationId is missing.")
       return
