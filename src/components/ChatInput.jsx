@@ -5,7 +5,7 @@ import { Box, TextField, IconButton, Popover, Typography } from '@mui/material'
 import { Icon } from '@iconify/react'
 import EmojiPicker from 'emoji-picker-react'
 
-const ChatInput = ({ isTyping, onSendMessage }) => {
+const ChatInput = ({ isTyping, onSendMessage, pendingForAgent }) => {
     const [input, setInput] = useState("")
     const [anchorEl, setAnchorEl] = useState(null)
 
@@ -23,6 +23,17 @@ const ChatInput = ({ isTyping, onSendMessage }) => {
         onSendMessage(trimmedMessage)
 
         setInput("")
+    }
+
+    if (pendingForAgent) {
+        return (
+            <Box p={2}>
+                <Typography textAlign={'center'}>
+                    درخواست شما ارسال شد، لطفا تا پیوستن اولین پشتیبان صبر کنید
+                    <Icon icon="svg-spinners:3-dots-fade" width="24" height="24" style={{marginBottom: -10, marginRight: 5, transform: 'rotate(180deg)'}} />
+                </Typography>
+            </Box>
+        )
     }
 
     return (

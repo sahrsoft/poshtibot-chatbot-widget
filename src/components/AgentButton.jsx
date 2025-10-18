@@ -1,13 +1,22 @@
 'use client'
 
-import { memo } from 'react'
-import { Box } from '@mui/material'
+import { memo, useCallback } from 'react'
+import { Box, Button } from '@mui/material'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useChat } from '@/hooks/useChat'
 
-const SupportButton = ({ isVisible }) => {
+const AgentButton = ({ userId, conversationId, isVisible }) => {
+
+    const { requestForAgent, pendingForAgent } = useChat({ userId, conversationId })
+
+    const handleRequestForAgent = useCallback(() => {
+        requestForAgent(conversationId)
+    }, [conversationId])
+
+
     return (
         <AnimatePresence>
-            {isVisible && (
+            {isVisible && !pendingForAgent && (
                 <motion.div
                     key="support-btn"
                     initial={{ opacity: 0, y: 40, scale: 0.9 }}
@@ -16,7 +25,8 @@ const SupportButton = ({ isVisible }) => {
                     transition={{ duration: 0.6, ease: "easeInOut" }}
                 >
                     <Box display="flex" justifyContent="center" mt={1.5}>
-                        <Box
+                        <Button
+                            onClick={handleRequestForAgent}
                             sx={{
                                 mt: -2.5,
                                 border: '1px solid rgba(74, 255, 186, 0.23)',
@@ -33,7 +43,7 @@ const SupportButton = ({ isVisible }) => {
                             }}
                         >
                             درخواست پشتیبان انسانی
-                        </Box>
+                        </Button>
                     </Box>
                 </motion.div>
             )}
@@ -41,4 +51,4 @@ const SupportButton = ({ isVisible }) => {
     )
 }
 
-export default memo(SupportButton)
+export default memo(AgentButton)

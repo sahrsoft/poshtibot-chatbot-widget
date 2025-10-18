@@ -7,7 +7,7 @@ import { usePoshtibotSetup } from "../hooks/usePoshtibotSetup"
 import ChatHeader from "./ChatHeader"
 import MessageList from "./MessageList"
 import ConversationStarters from "./ConversationStarters"
-import SupportButton from "./SupportButton"
+import AgentButton from "./AgentButton"
 import ChatInput from "./ChatInput"
 import CollectLeads from "./CollectLeads"
 import { LOCAL_STORAGE_CONVERSATION_KEY, LOCAL_STORAGE_MESSAGES_KEY } from "@/lib/constants"
@@ -21,7 +21,7 @@ const ChatWidget = () => {
 
     const { config, conversationId, userId, allMessages, setAllMessages, starterMessages } = usePoshtibotSetup()
 
-    const { sendUserMessage, messages, isTyping } = useChat({ userId, conversationId })
+    const { sendUserMessage, messages, isTyping, pendingForAgent } = useChat({ userId, conversationId })
 
     // Memoize the conversation starters array to prevent re-renders
     const conversationStarters = useMemo(() => starterMessages, [starterMessages])
@@ -77,7 +77,7 @@ const ChatWidget = () => {
     }, [])
 
     // Memoize the calculation for showing the support button
-    const isSupportButtonVisible = useMemo(() => {
+    const isAgentButtonVisible = useMemo(() => {
         const userMessageCount = allMessages.filter(msg => msg.sender === "user").length
         return config?.agent_handoff === 1 && userMessageCount > 0 && userMessageCount % 4 === 0
     }, [allMessages, config])
@@ -107,10 +107,10 @@ const ChatWidget = () => {
                         chatEndRef={chatEndRef}
                     />
 
-                    <SupportButton isVisible={isSupportButtonVisible} />
+                    <AgentButton isVisible={isAgentButtonVisible} userId={userId} conversationId={conversationId} />
 
                     <Box sx={{ px: .5, borderTop: '1px solid #e3eded', bgcolor: '#fff' }}>
-                        {showInitMsg && (
+                        {showInitMsg && !pendingForAgent && (
                             <ConversationStarters
                                 starters={conversationStarters}
                                 onStarterClick={handleStarterClick}
@@ -120,6 +120,7 @@ const ChatWidget = () => {
                         <ChatInput
                             isTyping={isTyping}
                             onSendMessage={handleSendMessage}
+                            pendingForAgent={pendingForAgent}
                         />
                     </Box>
                 </>

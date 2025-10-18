@@ -6,6 +6,7 @@ import getSocket from "@/utils/socket/Socket"
 export function useChat({ userId, conversationId }) {
   const [messages, setMessages] = useState([])
   const [typingUsers, setTypingUsers] = useState([])
+  const [pendingForAgent, setPendingForAgent] = useState(false)
 
   const socketRef = useRef(null)
 
@@ -32,6 +33,11 @@ export function useChat({ userId, conversationId }) {
       setMessages((prev) => [...prev, newMessage])
     }
 
+    const onRequestForAgent = (msg) => {
+      console.log(msg)
+      setPendingForAgent(true)
+    }
+
     // --- Typing Indicator Handlers ---
     const onUserTyping = ({ userId: typingUserId }) => {
       setTypingUsers((prev) =>
@@ -52,6 +58,7 @@ export function useChat({ userId, conversationId }) {
     socket.on("connect", onConnect)
     socket.on("message:error", onError)
     socket.on("message:poshtibot", onPoshtibotMessage)
+    socket.on("message:request_for_agent", onRequestForAgent)
     socket.on("user_typing", onUserTyping)
     socket.on("user_stop_typing", onUserStopTyping)
     socket.on('disconnect', onDisconnect)
@@ -69,6 +76,7 @@ export function useChat({ userId, conversationId }) {
       socket.off("connect", onConnect)
       socket.off("message:error", onError)
       socket.off("message:poshtibot", onPoshtibotMessage)
+      socket.off("message:request_for_agent", onRequestForAgent)
       socket.off("user_typing", onUserTyping)
       socket.off("user_stop_typing", onUserStopTyping)
       socket.off('disconnect', onDisconnect)
@@ -92,7 +100,19 @@ export function useChat({ userId, conversationId }) {
     })
   }, [userId])
 
+  const requestForAgent = useCallback((conversationId) => {
+    const socket = socketRef.current
+    if (!socket || !userId || !conversationId) {
+      console.warn("Cannot send message: socket, userId, or conversationId is missing.")
+      return
+    }
+
+    socket.emit("request_for_agent", {
+      conversation_id: conversationId
+    })
+  }, [userId])
+
   const isTyping = typingUsers.length > 0
 
-  return { messages, sendUserMessage, isTyping, typingUsers }
+  return { messages, sendUserMessage, requestForAgent, isTyping, typingUsers, pendingForAgent }
 }
