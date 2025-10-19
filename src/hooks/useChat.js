@@ -6,7 +6,7 @@ import getSocket from "@/utils/socket/Socket"
 export function useChat({ userId, conversationId }) {
   const [messages, setMessages] = useState([])
   const [typingUsers, setTypingUsers] = useState([])
-  const [pendingForAgent, setPendingForAgent] = useState(false)
+  const [agentStatus, setAgentStatus] = useState("none")
 
   const socketRef = useRef(null)
 
@@ -22,8 +22,9 @@ export function useChat({ userId, conversationId }) {
     const onConnect = () => {
       console.log(`Socket connected: ${socket.id}. Joining room: ${conversationId}`)
       socket.emit("join_room", conversationId)
+      socket.emit("user_start_chat", conversationId, userId)
 
-      socket.emit("register", userId)
+      // socket.emit("register", userId)
     }
 
     const onError = (error) => console.error("Socket error:", error)
@@ -35,7 +36,7 @@ export function useChat({ userId, conversationId }) {
 
     const onRequestForAgent = (msg) => {
       console.log(msg)
-      setPendingForAgent(true)
+      setAgentStatus("pending")
     }
 
     // --- Typing Indicator Handlers ---
@@ -59,8 +60,8 @@ export function useChat({ userId, conversationId }) {
     socket.on("message:error", onError)
     socket.on("message:poshtibot", onPoshtibotMessage)
     socket.on("message:request_for_agent", onRequestForAgent)
-    socket.on("user_typing", onUserTyping)
-    socket.on("user_stop_typing", onUserStopTyping)
+    socket.on("poshtibot:typing", onUserTyping)
+    socket.on("poshtibot:stop_typing", onUserStopTyping)
     socket.on('disconnect', onDisconnect)
     socket.on('reconnect_attempt', onReconnectAttempt)
     socket.on('reconnect', onReconnect)
@@ -77,8 +78,8 @@ export function useChat({ userId, conversationId }) {
       socket.off("message:error", onError)
       socket.off("message:poshtibot", onPoshtibotMessage)
       socket.off("message:request_for_agent", onRequestForAgent)
-      socket.off("user_typing", onUserTyping)
-      socket.off("user_stop_typing", onUserStopTyping)
+      socket.off("poshtibot:typing", onUserTyping)
+      socket.off("poshtibot:stop_typing", onUserStopTyping)
       socket.off('disconnect', onDisconnect)
       socket.off('reconnect_attempt', onReconnectAttempt)
       socket.off('reconnect', onReconnect)
@@ -94,11 +95,12 @@ export function useChat({ userId, conversationId }) {
     }
 
     socket.emit("user_message", {
+      to_agent: agentStatus === "joined",
       user_flows_data: userFlowsData,
       conversation_id: conversationId,
       message
     })
-  }, [userId])
+  }, [agentStatus, userId])
 
   const requestForAgent = useCallback((conversationId) => {
     const socket = socketRef.current
@@ -108,11 +110,12 @@ export function useChat({ userId, conversationId }) {
     }
 
     socket.emit("request_for_agent", {
+      userId,
       conversation_id: conversationId
     })
   }, [userId])
 
   const isTyping = typingUsers.length > 0
 
-  return { messages, sendUserMessage, requestForAgent, isTyping, typingUsers, pendingForAgent }
+  return { messages, sendUserMessage, requestForAgent, isTyping, typingUsers, agentStatus }
 }
