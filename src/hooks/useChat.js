@@ -39,6 +39,11 @@ export function useChat({ userId, conversationId }) {
       setAgentStatus("pending")
     }
 
+    const onCancelRequestForAgent = (msg) => {
+      console.log(msg)
+      setAgentStatus("none")
+    }
+
     // --- Typing Indicator Handlers ---
     const onUserTyping = ({ userId: typingUserId }) => {
       setTypingUsers((prev) =>
@@ -60,6 +65,7 @@ export function useChat({ userId, conversationId }) {
     socket.on("message:error", onError)
     socket.on("message:poshtibot", onPoshtibotMessage)
     socket.on("message:request_for_agent", onRequestForAgent)
+    socket.on("message:cancel_request_for_agent", onCancelRequestForAgent)
     socket.on("poshtibot:typing", onUserTyping)
     socket.on("poshtibot:stop_typing", onUserStopTyping)
     socket.on('disconnect', onDisconnect)
@@ -78,6 +84,7 @@ export function useChat({ userId, conversationId }) {
       socket.off("message:error", onError)
       socket.off("message:poshtibot", onPoshtibotMessage)
       socket.off("message:request_for_agent", onRequestForAgent)
+      socket.off("message:cancel_request_for_agent", onRequestForAgent)
       socket.off("poshtibot:typing", onUserTyping)
       socket.off("poshtibot:stop_typing", onUserStopTyping)
       socket.off('disconnect', onDisconnect)
@@ -115,7 +122,20 @@ export function useChat({ userId, conversationId }) {
     })
   }, [userId])
 
+  const cancelRequestForAgent = useCallback((conversationId) => {
+    const socket = socketRef.current
+    if (!socket || !userId || !conversationId) {
+      console.warn("Cannot send message: socket, userId, or conversationId is missing.")
+      return
+    }
+
+    socket.emit("cancel_request_for_agent", {
+      userId,
+      conversation_id: conversationId
+    })
+  }, [userId])
+
   const isTyping = typingUsers.length > 0
 
-  return { messages, sendUserMessage, requestForAgent, isTyping, typingUsers, agentStatus }
+  return { messages, sendUserMessage, requestForAgent, isTyping, typingUsers, agentStatus, setAgentStatus, cancelRequestForAgent }
 }
