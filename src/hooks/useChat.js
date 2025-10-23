@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, useCallback } from "react"
-import getSocket from "@/utils/socket/Socket"
+import getSocket from "@/utils/socket/socket"
 
 export function useChat({ userId, conversationId }) {
   const [messages, setMessages] = useState([])
