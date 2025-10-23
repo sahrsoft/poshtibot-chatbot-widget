@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid'
 // Import hooks and components
 import { useWidgetConfig } from "@/hooks/useWidgetConfig"
 import { WidgetLauncher } from "@/components/WidgetLauncher"
-import { LOCAL_STORAGE_CONVERSATION_KEY } from "@/lib/constants"
+import { LOCAL_STORAGE_CONVERSATION_DATA_KEY } from "@/lib/constants"
 
 // For easier switching between dev and prod
 const WIDGET_URL = process.env.NODE_ENV === 'production'
@@ -22,14 +22,15 @@ export default function WidgetRoot({ chatbotId }) {
   // Effect for initializing conversation/user IDs
   useEffect(() => {
     if (!config.user_flows_data) return
-    if (!localStorage.getItem(LOCAL_STORAGE_CONVERSATION_KEY)) {
+    if (!localStorage.getItem(LOCAL_STORAGE_CONVERSATION_DATA_KEY)) {
       const conversation_id = uuidv4()
       const user_id = uuidv4()
       const conversationData = {
-        "poshtibot_conversation_id": conversation_id,
-        "poshtibot_user_id": user_id
+        poshtibot_conversation_id: conversation_id,
+        poshtibot_user_id: user_id,
+        agent_status: "none"
       }
-      localStorage.setItem(LOCAL_STORAGE_CONVERSATION_KEY, JSON.stringify(conversationData))
+      localStorage.setItem(LOCAL_STORAGE_CONVERSATION_DATA_KEY, JSON.stringify(conversationData))
 
       const data = {
         user_flows_data: config.user_flows_data,

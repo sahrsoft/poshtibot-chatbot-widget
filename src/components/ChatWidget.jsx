@@ -10,7 +10,7 @@ import ConversationStarters from "./ConversationStarters"
 import AgentButton from "./AgentButton"
 import ChatInput from "./ChatInput"
 import CollectLeads from "./CollectLeads"
-import { LOCAL_STORAGE_CONVERSATION_KEY, LOCAL_STORAGE_MESSAGES_KEY } from "@/lib/constants"
+import { LOCAL_STORAGE_CONVERSATION_DATA_KEY, LOCAL_STORAGE_MESSAGES_KEY } from "@/lib/constants"
 import PendingForAgent from "./PendingForAgent"
 
 const ChatWidget = () => {
@@ -22,7 +22,7 @@ const ChatWidget = () => {
 
   const { config, conversationId, userId, allMessages, setAllMessages, starterMessages } = usePoshtibotSetup()
 
-  const { sendUserMessage, messages, isTyping, agentStatus } = useChat({ userId, conversationId })
+  const { sendUserMessage, messages, isTyping, agentStatus, setAgentStatus, cancelRequestForAgent } = useChat({ userId, conversationId })
 
   // Memoize the conversation starters array to prevent re-renders
   const conversationStarters = useMemo(() => starterMessages, [starterMessages])
@@ -44,10 +44,14 @@ const ChatWidget = () => {
   }, [allMessages, isTyping])
 
   useEffect(() => {
-    const conversationData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CONVERSATION_KEY))
+    const conversationData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CONVERSATION_DATA_KEY))
     if ((config?.leads_from_name || config?.leads_from_email || config?.leads_from_mobile) &&
       (!conversationData.leads_collected)) {
       setLeadsStatus(true)
+    }
+
+    if (conversationData?.agent_status === "pending") {
+      setAgentStatus("pending")
     }
   }, [config])
 
@@ -83,6 +87,16 @@ const ChatWidget = () => {
     return config?.agent_handoff === 1 && userMessageCount > 0 && userMessageCount % 4 === 0
   }, [allMessages, config])
 
+  const handleCancelRequest = useCallback(() => {
+    cancelRequestForAgent(conversationId)
+    const conversationData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CONVERSATION_DATA_KEY))
+    const updated = {
+      ...conversationData,
+      agent_status: "none"
+    }
+    conversationData && localStorage.setItem(LOCAL_STORAGE_CONVERSATION_DATA_KEY, JSON.stringify(updated))
+  }, [cancelRequestForAgent, conversationId])
+
 
   if (!config) {
     return <Box sx={{ p: 4, textAlign: "center" }}>در حال بارگذاری...</Box>
@@ -107,7 +121,9 @@ const ChatWidget = () => {
             chatEndRef={chatEndRef}
           />
 
-          <AgentButton isVisible={isAgentButtonVisible} userId={userId} conversationId={conversationId} />
+          {agentStatus === "none" &&
+            <AgentButton isVisible={isAgentButtonVisible} userId={userId} conversationId={conversationId} />
+          }
 
           <Box sx={{ px: .5, borderTop: '1px solid #e3eded', bgcolor: '#fff' }}>
             {showInitMsg && (agentStatus === "none") && (
@@ -118,7 +134,7 @@ const ChatWidget = () => {
             )}
 
             {agentStatus === "pending" ? (
-              <PendingForAgent />
+              <PendingForAgent handleCancelRequest={handleCancelRequest} />
             ) : (
               <ChatInput
                 isTyping={isTyping}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { LOCAL_STORAGE_CONFIG_KEY, LOCAL_STORAGE_CONVERSATION_KEY, LOCAL_STORAGE_MESSAGES_KEY, LOCAL_STORAGE_STARTER_KEY } from '@/lib/constants'
+import { LOCAL_STORAGE_CONFIG_KEY, LOCAL_STORAGE_CONVERSATION_DATA_KEY, LOCAL_STORAGE_MESSAGES_KEY, LOCAL_STORAGE_STARTER_KEY } from '@/lib/constants'
 
 
 const DEFAULT_BOT_MESSAGE = { sender: "poshtibot", message: "سلام، چطور می‌تونم کمکتون کنم؟" }
@@ -16,7 +16,7 @@ export function usePoshtibotSetup() {
 
         const loadFromLocalStorage = () => {
             try {
-                const conversationData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CONVERSATION_KEY)) || {}
+                const conversationData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CONVERSATION_DATA_KEY)) || {}
                 const pwc = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CONFIG_KEY)) || {}
                 const savedMessages = JSON.parse(localStorage.getItem(LOCAL_STORAGE_MESSAGES_KEY)) || []
                 const starter = JSON.parse(localStorage.getItem(LOCAL_STORAGE_STARTER_KEY)) || []
