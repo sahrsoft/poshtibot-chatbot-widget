@@ -4,27 +4,27 @@
 import { useEffect, useState } from "react"
 import { Box, Button, Paper, Typography } from "@mui/material"
 import { TextField } from "@mui/material"
-import { LOCAL_STORAGE_CONVERSATION_DATA_KEY } from "@/lib/constants"
+import { LOCAL_STORAGE_CHAT_DATA_KEY } from "@/lib/constants"
 
 const CollectLeads = ({ config }) => {
 
   useEffect(() => {
-    const cachedConfig = localStorage.getItem(LOCAL_STORAGE_CONVERSATION_DATA_KEY)
+    const cachedConfig = localStorage.getItem(LOCAL_STORAGE_CHAT_DATA_KEY)
     if (cachedConfig) {
       const parsed = JSON.parse(cachedConfig)
-      setFormData(f => ({ ...f, conversation_id: parsed.poshtibot_conversation_id || "" }))
+      setFormData(f => ({ ...f, chat_id: parsed.poshtibot_chat_id || "" }))
     }
   }, [])
 
   const [formData, setFormData] = useState(() => {
-    if (typeof window === "undefined") return { conversation_id: "", name: "", email: "", mobile: "" }
+    if (typeof window === "undefined") return { chat_id: "", name: "", email: "", mobile: "" }
 
     try {
-      const cachedConfig = localStorage.getItem(LOCAL_STORAGE_CONVERSATION_DATA_KEY)
-      const conversation_id = cachedConfig ? JSON.parse(cachedConfig).poshtibot_conversation_id : ""
-      return { conversation_id, name: "", email: "", mobile: "" }
+      const cachedConfig = localStorage.getItem(LOCAL_STORAGE_CHAT_DATA_KEY)
+      const chat_id = cachedConfig ? JSON.parse(cachedConfig).poshtibot_chat_id : ""
+      return { chat_id, name: "", email: "", mobile: "" }
     } catch {
-      return { conversation_id: "", name: "", email: "", mobile: "" }
+      return { chat_id: "", name: "", email: "", mobile: "" }
     }
   })
 
@@ -86,12 +86,12 @@ const CollectLeads = ({ config }) => {
       .then(response => response.json())
       .then(data => {
         console.log(data)
-        const conversationData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CONVERSATION_DATA_KEY))
+        const chatData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CHAT_DATA_KEY))
         const updated = {
-          ...conversationData,
+          ...chatData,
           leads_collected: true
         }
-        localStorage.setItem(LOCAL_STORAGE_CONVERSATION_DATA_KEY, JSON.stringify(updated))
+        localStorage.setItem(LOCAL_STORAGE_CHAT_DATA_KEY, JSON.stringify(updated))
         window.location.reload()
       })
       .catch(err => console.log(err))

@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { Box, IconButton, Typography } from '@mui/material'
 import { Icon } from '@iconify/react'
 
-const ChatHeader = ({ notifications, onToggleNotifications, onCloseChat, agentStatus }) => {
+const ChatHeader = ({ notifications, onToggleNotifications, onCloseChat, agentStatus, agentName }) => {
     return (
         <Box
             sx={{
@@ -45,7 +45,8 @@ const ChatHeader = ({ notifications, onToggleNotifications, onCloseChat, agentSt
 
                     ) : (agentStatus === "joined") ? (
                         <Typography>
-                            در حال مکالمه با پشتیبان
+
+                            در حال مکالمه با {agentName}
                         </Typography>
                     ) : ""
                 }

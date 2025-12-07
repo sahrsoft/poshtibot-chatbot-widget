@@ -4,7 +4,7 @@ import { memo } from 'react'
 import { Box, List, ListItem, ListItemIcon, ListItemText, Typography } from '@mui/material'
 import { Icon } from '@iconify/react'
 
-const ConversationStarters = ({ starters, onStarterClick }) => {
+const ChatStarters = ({ starters, onStarterClick }) => {
     // Filter enabled starters once
     const enabledStarters = starters?.filter(s => s.enable && s.message.trim())
 
@@ -60,4 +60,4 @@ const ConversationStarters = ({ starters, onStarterClick }) => {
     )
 }
 
-export default memo(ConversationStarters)
+export default memo(ChatStarters)

@@ -4,10 +4,10 @@ export async function POST(request) {
     try {
         const body = await request.json()
 
-        const { conversation_id, name, email, mobile } = body
+        const { chat_id, name, email, mobile } = body
 
         const data = {
-            conversation_id,
+            chat_id,
             name,
             email,
             mobile

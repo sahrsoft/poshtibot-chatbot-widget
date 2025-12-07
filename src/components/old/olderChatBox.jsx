@@ -15,7 +15,7 @@ export default function ChatWidget() {
     const [config, setConfig] = useState({})
     const [notifications, setNotifications] = useState(true)
     const [anchorElChat, setAnchorElChat] = useState(null)
-    const [conversationId, setConversationId] = useState(null)
+    const [chatId, setChatId] = useState(null)
     const [userId, setUserId] = useState(null)
     const [typing, setTyping] = useState(false)
     const [botTypingText, setBotTypingText] = useState('')
@@ -31,9 +31,9 @@ export default function ChatWidget() {
     const fileInputRef = useRef(null)
 
     useEffect(() => {
-        const conversationData = JSON.parse(localStorage.getItem("poshtibot-conversation-data"))
-        setConversationId(conversationData.poshtibot_conversation_id)
-        setUserId(conversationData.poshtibot_user_id)
+        const chatData = JSON.parse(localStorage.getItem("poshtibot-chat-data"))
+        setChatId(chatData.poshtibot_chat_id)
+        setUserId(chatData.poshtibot_user_id)
 
         const pwc = JSON.parse(localStorage.getItem("poshtibot-widget-config"))
         setConfig(pwc)
@@ -56,7 +56,7 @@ export default function ChatWidget() {
     }, [messages, typing])
 
 
-    const conversationStarters = [
+    const chatStarters = [
         { id: '1', message: 'در مورد محصولات سوال دارم', enabled: true },
         { id: '2', message: 'وضعیت سفارش من', enabled: true },
     ]
@@ -67,8 +67,8 @@ export default function ChatWidget() {
         const newMessages = [...allMessages, { sender: "user", message: starterText }]
         setAllMessages(newMessages)
         setInput("")
-        joinGroup(conversationId)
-        sendUser(config.user_flows_data, conversationId, starterText)
+        joinGroup(chatId)
+        sendUser(config.user_flows_data, chatId, starterText)
         localStorage.setItem("poshtibot-messages", JSON.stringify(newMessages))
     }
 
@@ -100,8 +100,8 @@ export default function ChatWidget() {
         setAllMessages(newMessages)
         setInput("")
 
-        joinGroup(conversationId)
-        sendUser(config.user_flows_data, conversationId, input)
+        joinGroup(chatId)
+        sendUser(config.user_flows_data, chatId, input)
 
         localStorage.setItem("poshtibot-messages", JSON.stringify(newMessages))
 
@@ -320,7 +320,7 @@ export default function ChatWidget() {
                     bgcolor: '#fff',
                 }}
             >
-                {!hasUserMessage && allMessages.length < 9 && conversationStarters.filter(starter => starter.enabled && starter.message.trim()).length > 0 && (
+                {!hasUserMessage && allMessages.length < 9 && chatStarters.filter(starter => starter.enabled && starter.message.trim()).length > 0 && (
                     <Box
                         sx={{
                             width: '100%',
@@ -342,7 +342,7 @@ export default function ChatWidget() {
                         }}
                     >
                         <List sx={{ p: 0, ml: .5 }}>
-                            {conversationStarters.filter(starter => starter.enabled && starter.message.trim()).map((starter) => (
+                            {chatStarters.filter(starter => starter.enabled && starter.message.trim()).map((starter) => (
                                 <ListItem
                                     key={starter.id}
                                     onClick={() => handleStarterClick(starter.message)}

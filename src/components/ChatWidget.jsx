@@ -6,11 +6,11 @@ import { useChat } from "@/hooks/useChat"
 import { usePoshtibotSetup } from "../hooks/usePoshtibotSetup"
 import ChatHeader from "./ChatHeader"
 import MessageList from "./MessageList"
-import ConversationStarters from "./ConversationStarters"
+import ChatStarters from "./ChatStarters"
 import AgentButton from "./AgentButton"
 import ChatInput from "./ChatInput"
 import CollectLeads from "./CollectLeads"
-import { LOCAL_STORAGE_CONVERSATION_DATA_KEY, LOCAL_STORAGE_MESSAGES_KEY } from "@/lib/constants"
+import { LOCAL_STORAGE_CHAT_DATA_KEY, LOCAL_STORAGE_MESSAGES_KEY } from "@/lib/constants"
 import PendingForAgent from "./PendingForAgent"
 
 const ChatWidget = () => {
@@ -20,12 +20,12 @@ const ChatWidget = () => {
 
   const chatEndRef = useRef(null)
 
-  const { config, conversationId, userId, allMessages, setAllMessages, starterMessages } = usePoshtibotSetup()
+  const { config, chatbotId, chatId, userId, allMessages, setAllMessages, starterMessages } = usePoshtibotSetup()
 
-  const { sendUserMessage, messages, isTyping, agentStatus, setAgentStatus, cancelRequestForAgent } = useChat({ userId, conversationId })
+  const { sendUserMessage, messages, isTyping, agentStatus, setAgentStatus, cancelRequestForAgent, agentName, setAgentName } = useChat({ chatbotId, userId, chatId })
 
-  // Memoize the conversation starters array to prevent re-renders
-  const conversationStarters = useMemo(() => starterMessages, [starterMessages])
+  // Memoize the chat starters array to prevent re-renders
+  const chatStarters = useMemo(() => starterMessages, [starterMessages])
 
   useEffect(() => {
     if (!messages?.length) return
@@ -44,14 +44,18 @@ const ChatWidget = () => {
   }, [allMessages, isTyping])
 
   useEffect(() => {
-    const conversationData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CONVERSATION_DATA_KEY))
+    const chatData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CHAT_DATA_KEY))
     if ((config?.leads_from_name || config?.leads_from_email || config?.leads_from_mobile) &&
-      (!conversationData.leads_collected)) {
+      (!chatData.leads_collected)) {
       setLeadsStatus(true)
     }
 
-    if (conversationData?.agent_status === "pending") {
+    if (chatData?.agent_status === "pending") {
       setAgentStatus("pending")
+    }
+    if (chatData?.agent_status === "joined") {
+      setAgentStatus("joined")
+      setAgentName(chatData?.agent_name)
     }
   }, [config])
 
@@ -67,8 +71,8 @@ const ChatWidget = () => {
       return updated
     })
     setShowInitMsg(false) // Hide starters after first message
-    sendUserMessage(config.user_flows_data, conversationId, messageText)
-  }, [conversationId, config, sendUserMessage, setAllMessages])
+    sendUserMessage(config.user_flows_data, chatId, messageText)
+  }, [chatId, config, sendUserMessage, setAllMessages])
 
   // Memoized callback for clicking a starter prompt
   const handleStarterClick = useCallback((starterText) => {
@@ -88,14 +92,14 @@ const ChatWidget = () => {
   }, [allMessages, config])
 
   const handleCancelRequest = useCallback(() => {
-    cancelRequestForAgent(conversationId)
-    const conversationData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CONVERSATION_DATA_KEY))
+    cancelRequestForAgent(chatId)
+    const chatData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CHAT_DATA_KEY))
     const updated = {
-      ...conversationData,
+      ...chatData,
       agent_status: "none"
     }
-    conversationData && localStorage.setItem(LOCAL_STORAGE_CONVERSATION_DATA_KEY, JSON.stringify(updated))
-  }, [cancelRequestForAgent, conversationId])
+    chatData && localStorage.setItem(LOCAL_STORAGE_CHAT_DATA_KEY, JSON.stringify(updated))
+  }, [cancelRequestForAgent, chatId])
 
 
   if (!config) {
@@ -109,6 +113,7 @@ const ChatWidget = () => {
         onToggleNotifications={toggleNotifications}
         onCloseChat={handleCloseChat}
         agentStatus={agentStatus}
+        agentName={agentName}
       />
 
       {leadsStatus ? (
@@ -122,13 +127,13 @@ const ChatWidget = () => {
           />
 
           {agentStatus === "none" &&
-            <AgentButton isVisible={isAgentButtonVisible} userId={userId} conversationId={conversationId} />
+            <AgentButton chatbotId={chatbotId} isVisible={isAgentButtonVisible} userId={userId} chatId={chatId} userFlowsData={config.user_flows_data} />
           }
 
           <Box sx={{ px: .5, borderTop: '1px solid #e3eded', bgcolor: '#fff' }}>
             {showInitMsg && (agentStatus === "none") && (
-              <ConversationStarters
-                starters={conversationStarters}
+              <ChatStarters
+                starters={chatStarters}
                 onStarterClick={handleStarterClick}
               />
             )}

@@ -4,14 +4,14 @@ export async function POST(request) {
     try {
         const body = await request.json()
 
-        const { user_flows_data, conversation_id } = body
+        const { user_flows_data, chat_id } = body
 
         const data = {
             user_flows_data,
-            conversation_id
+            chat_id
         }
 
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}.add_new_conversation_on_widget_lunch`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}.add_new_chat_on_widget_lunch`, {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json',

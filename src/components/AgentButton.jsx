@@ -4,22 +4,22 @@ import { memo, useCallback } from 'react'
 import { Box, Button } from '@mui/material'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useChat } from '@/hooks/useChat'
-import { LOCAL_STORAGE_CONVERSATION_DATA_KEY } from '@/lib/constants'
+import { LOCAL_STORAGE_CHAT_DATA_KEY } from '@/lib/constants'
 
-const AgentButton = ({ userId, conversationId, isVisible }) => {
+const AgentButton = ({ chatbotId, userId, chatId, isVisible, userFlowsData }) => {
 
-  const { requestForAgent, agentStatus } = useChat({ userId, conversationId })
+  const { requestForAgent, agentStatus } = useChat({ chatbotId, userId, chatId })
 
   const handleRequestForAgent = useCallback(() => {
-    requestForAgent(conversationId)
+    requestForAgent(chatId, userFlowsData)
 
-    const conversationData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CONVERSATION_DATA_KEY))
+    const chatData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CHAT_DATA_KEY))
     const updated = {
-      ...conversationData,
+      ...chatData,
       agent_status: "pending"
     }
-    conversationData && localStorage.setItem(LOCAL_STORAGE_CONVERSATION_DATA_KEY, JSON.stringify(updated))
-  }, [conversationId])
+    chatData && localStorage.setItem(LOCAL_STORAGE_CHAT_DATA_KEY, JSON.stringify(updated))
+  }, [chatId])
 
 
   return (
