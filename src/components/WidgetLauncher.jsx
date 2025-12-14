@@ -60,7 +60,7 @@ export function WidgetLauncher({ config, onClick }) {
                     src={
                         config?.logo_url
                             ? process.env.NEXT_PUBLIC_API_SERVER_URL + config.logo_url
-                            : "/images/whiteicon.png"
+                            : "/images/white-icon.png"
                     }
                     width={25}
                     height={25}

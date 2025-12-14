@@ -118,8 +118,8 @@ export function useChat({ chatbotId, userId, chatId }) {
     // Cleanup listeners on component unmount
     return () => {
       socket.off("connect", onConnect)
-      socket.off("chat:assigned", onConnect)
-      socket.off("message:agent", onConnect)
+      socket.off("chat:assigned", onAgentAssigned)
+      socket.off("message:agent", onAgentMessage)
 
       socket.off("message:error", onError)
       socket.off("message:poshtibot", onPoshtibotMessage)
