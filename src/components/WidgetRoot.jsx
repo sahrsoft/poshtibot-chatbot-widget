@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { useWidgetConfig } from "@/hooks/useWidgetConfig"
 import { WidgetLauncher } from "@/components/WidgetLauncher"
 import { LOCAL_STORAGE_CHAT_DATA_KEY } from "@/lib/constants"
+import { useChat } from "@/hooks/useChat"
 
 // For easier switching between dev and prod
 const WIDGET_URL = process.env.NODE_ENV === 'production'
@@ -19,6 +20,30 @@ export default function WidgetRoot({ chatbotId }) {
   const [open, setOpen] = useState(false)
   const { config } = useWidgetConfig(chatbotId) // Custom hook handles all config logic
 
+  // Get chat data from localStorage
+  const [chatData, setChatData] = useState(null)
+
+  useEffect(() => {
+    const data = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CHAT_DATA_KEY) || 'null')
+    setChatData(data)
+
+    // Listen for storage changes (in case chat data is updated elsewhere)
+    const handleStorageChange = () => {
+      const updated = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CHAT_DATA_KEY) || 'null')
+      setChatData(updated)
+    }
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
+
+  // Use the useChat hook to maintain socket connection and track unread messages
+  const { unreadCount } = useChat({
+    chatbotId,
+    userId: chatData?.poshtibot_user_id,
+    chatId: chatData?.poshtibot_chat_id,
+    isOpen: open
+  })
+
   // Effect for initializing chat/user IDs
   useEffect(() => {
     if (!config.user_flows_data) return
@@ -27,12 +52,13 @@ export default function WidgetRoot({ chatbotId }) {
 
     const chat_id = uuidv4()
     const user_id = uuidv4()
-    const chatData = {
+    const newChatData = {
       poshtibot_chat_id: chat_id,
       poshtibot_user_id: user_id,
       agent_status: "none"
     }
-    localStorage.setItem(LOCAL_STORAGE_CHAT_DATA_KEY, JSON.stringify(chatData))
+    localStorage.setItem(LOCAL_STORAGE_CHAT_DATA_KEY, JSON.stringify(newChatData))
+    setChatData(newChatData)
 
     const data = {
       user_flows_data: config.user_flows_data,
@@ -74,7 +100,7 @@ export default function WidgetRoot({ chatbotId }) {
   return (
     <>
       <AnimatePresence>
-        {!open && <WidgetLauncher config={config} onClick={toggleWidget} />}
+        {!open && <WidgetLauncher config={config} onClick={toggleWidget} unreadCount={unreadCount} />}
       </AnimatePresence>
 
       <Box

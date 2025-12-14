@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState, useCallback } from "react"
 import getSocket from "@/utils/socket/socket"
-import { LOCAL_STORAGE_CHAT_DATA_KEY } from "@/lib/constants"
+import { LOCAL_STORAGE_CHAT_DATA_KEY, LOCAL_STORAGE_MESSAGES_KEY } from "@/lib/constants"
 
-export function useChat({ chatbotId, userId, chatId }) {
+export function useChat({ chatbotId, userId, chatId, isOpen = true }) {
   const [messages, setMessages] = useState([])
   const [typingUsers, setTypingUsers] = useState([])
   const [agentStatus, setAgentStatus] = useState("none")
   const [agentName, setAgentName] = useState("")
+  const [unreadCount, setUnreadCount] = useState(0)
 
   const socketRef = useRef(null)
 
@@ -49,16 +50,54 @@ export function useChat({ chatbotId, userId, chatId }) {
 
     const onAgentMessage = (data) => {
       console.log("Agent sent:", data)
-      const newMessage = { message: data, sender: agentName, id: Date.now() }
-      setMessages((prev) => [...prev, newMessage])
+      const messageId = Date.now()
+      const newMessage = { 
+        message: data, 
+        sender: data.agent_name || agentName || "پشتیبان", 
+        id: messageId 
+      }
+      setMessages((prev) => {
+        // Prevent duplicates in state
+        if (prev.some(m => m.id === messageId)) return prev
+        return [...prev, newMessage]
+      })
+      
+      // Store message in localStorage (with duplicate check)
+      const savedMessages = JSON.parse(localStorage.getItem(LOCAL_STORAGE_MESSAGES_KEY)) || []
+      if (!savedMessages.some(m => m.id === messageId)) {
+        const updatedMessages = [...savedMessages, newMessage]
+        localStorage.setItem(LOCAL_STORAGE_MESSAGES_KEY, JSON.stringify(updatedMessages))
+      }
+      
+      // Track unread messages when widget is closed
+      if (!isOpen) {
+        setUnreadCount(prev => prev + 1)
+      }
     }
 
     const onError = (error) => console.error("Socket error:", error)
 
     const onPoshtibotMessage = (message) => {
       console.log(message)
-      const newMessage = { message, sender: "poshtibot", id: Date.now() }
-      setMessages((prev) => [...prev, newMessage])
+      const messageId = Date.now()
+      const newMessage = { message, sender: "poshtibot", id: messageId }
+      setMessages((prev) => {
+        // Prevent duplicates in state
+        if (prev.some(m => m.id === messageId)) return prev
+        return [...prev, newMessage]
+      })
+      
+      // Store message in localStorage (with duplicate check)
+      const savedMessages = JSON.parse(localStorage.getItem(LOCAL_STORAGE_MESSAGES_KEY)) || []
+      if (!savedMessages.some(m => m.id === messageId)) {
+        const updatedMessages = [...savedMessages, newMessage]
+        localStorage.setItem(LOCAL_STORAGE_MESSAGES_KEY, JSON.stringify(updatedMessages))
+      }
+      
+      // Track unread messages when widget is closed
+      if (!isOpen) {
+        setUnreadCount(prev => prev + 1)
+      }
     }
 
     const onRequestForAgent = (msg) => {
@@ -131,7 +170,14 @@ export function useChat({ chatbotId, userId, chatId }) {
       socket.off('reconnect_attempt', onReconnectAttempt)
       socket.off('reconnect', onReconnect)
     }
-  }, [chatbotId, chatId, userId, agentName])
+  }, [chatbotId, chatId, userId, agentName, isOpen])
+
+  // Clear unread count when widget opens
+  useEffect(() => {
+    if (isOpen) {
+      setUnreadCount(0)
+    }
+  }, [isOpen])
 
 
   const sendUserMessage = useCallback((userFlowsData, chatId, message) => {
@@ -194,5 +240,17 @@ export function useChat({ chatbotId, userId, chatId }) {
   const isTyping = typingUsers.length > 0
 
 
-  return { messages, sendUserMessage, requestForAgent, isTyping, typingUsers, agentStatus, setAgentStatus, cancelRequestForAgent, agentName, setAgentName }
+  return { 
+    messages, 
+    sendUserMessage, 
+    requestForAgent, 
+    isTyping, 
+    typingUsers, 
+    agentStatus, 
+    setAgentStatus, 
+    cancelRequestForAgent, 
+    agentName, 
+    setAgentName,
+    unreadCount 
+  }
 }
