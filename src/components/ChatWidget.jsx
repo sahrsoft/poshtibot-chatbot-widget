@@ -22,7 +22,7 @@ const ChatWidget = () => {
 
   const { config, chatbotId, chatId, userId, allMessages, setAllMessages, starterMessages } = usePoshtibotSetup()
 
-  const { sendUserMessage, messages, isTyping, agentStatus, setAgentStatus, cancelRequestForAgent, agentName, setAgentName } = useChat({ chatbotId, userId, chatId })
+  const { sendUserMessage, messages, isTyping, agentStatus, setAgentStatus, cancelRequestForAgent, agentName, setAgentName, emitTyping, emitStopTyping } = useChat({ chatbotId, userId, chatId })
 
   // Memoize the chat starters array to prevent re-renders
   const chatStarters = useMemo(() => starterMessages, [starterMessages])
@@ -144,6 +144,8 @@ const ChatWidget = () => {
               <ChatInput
                 isTyping={isTyping}
                 onSendMessage={handleSendMessage}
+                onTyping={emitTyping}
+                onStopTyping={emitStopTyping}
               />
             )}
 

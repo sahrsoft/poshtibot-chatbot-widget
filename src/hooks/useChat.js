@@ -51,24 +51,24 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true }) {
     const onAgentMessage = (data) => {
       console.log("Agent sent:", data)
       const messageId = Date.now()
-      const newMessage = { 
-        message: data, 
-        sender: data.agent_name || agentName || "پشتیبان", 
-        id: messageId 
+      const newMessage = {
+        message: data,
+        sender: data.agent_name || agentName || "پشتیبان",
+        id: messageId
       }
       setMessages((prev) => {
         // Prevent duplicates in state
         if (prev.some(m => m.id === messageId)) return prev
         return [...prev, newMessage]
       })
-      
+
       // Store message in localStorage (with duplicate check)
       const savedMessages = JSON.parse(localStorage.getItem(LOCAL_STORAGE_MESSAGES_KEY)) || []
       if (!savedMessages.some(m => m.id === messageId)) {
         const updatedMessages = [...savedMessages, newMessage]
         localStorage.setItem(LOCAL_STORAGE_MESSAGES_KEY, JSON.stringify(updatedMessages))
       }
-      
+
       // Track unread messages when widget is closed
       if (!isOpen) {
         setUnreadCount(prev => prev + 1)
@@ -86,14 +86,14 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true }) {
         if (prev.some(m => m.id === messageId)) return prev
         return [...prev, newMessage]
       })
-      
+
       // Store message in localStorage (with duplicate check)
       const savedMessages = JSON.parse(localStorage.getItem(LOCAL_STORAGE_MESSAGES_KEY)) || []
       if (!savedMessages.some(m => m.id === messageId)) {
         const updatedMessages = [...savedMessages, newMessage]
         localStorage.setItem(LOCAL_STORAGE_MESSAGES_KEY, JSON.stringify(updatedMessages))
       }
-      
+
       // Track unread messages when widget is closed
       if (!isOpen) {
         setUnreadCount(prev => prev + 1)
@@ -131,7 +131,8 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true }) {
     socket.on("connect", onConnect)
     socket.on("chat:assigned", onAgentAssigned)
     socket.on("message:agent", onAgentMessage)
-
+    socket.on('user_typing', onUserTyping)
+    socket.on('user_stop_typing', onUserStopTyping)
 
 
     socket.on("message:error", onError)
@@ -166,6 +167,8 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true }) {
       socket.off("message:cancel_request_for_agent", onRequestForAgent)
       socket.off("poshtibot:typing", onUserTyping)
       socket.off("poshtibot:stop_typing", onUserStopTyping)
+      socket.off("user_typing", onUserTyping)
+      socket.off("user_stop_typing", onUserStopTyping)
       socket.off('disconnect', onDisconnect)
       socket.off('reconnect_attempt', onReconnectAttempt)
       socket.off('reconnect', onReconnect)
@@ -236,21 +239,44 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true }) {
     })
   }, [userId])
 
+  // Emit typing event when user starts typing
+  const emitTyping = useCallback(() => {
+    const socket = socketRef.current
+    if (!socket || !chatId) {
+      return
+    }
+    socket.emit("typing", {
+      chat_id: chatId,
+    })
+  }, [chatId])
+
+  // Emit stop_typing event when user stops typing
+  const emitStopTyping = useCallback(() => {
+    const socket = socketRef.current
+    if (!socket || !chatId) {
+      return
+    }
+    socket.emit("stop_typing", {
+      chat_id: chatId,
+    })
+  }, [chatId])
 
   const isTyping = typingUsers.length > 0
 
 
-  return { 
-    messages, 
-    sendUserMessage, 
-    requestForAgent, 
-    isTyping, 
-    typingUsers, 
-    agentStatus, 
-    setAgentStatus, 
-    cancelRequestForAgent, 
-    agentName, 
+  return {
+    messages,
+    sendUserMessage,
+    requestForAgent,
+    isTyping,
+    typingUsers,
+    agentStatus,
+    setAgentStatus,
+    cancelRequestForAgent,
+    agentName,
     setAgentName,
-    unreadCount 
+    unreadCount,
+    emitTyping,
+    emitStopTyping
   }
 }
