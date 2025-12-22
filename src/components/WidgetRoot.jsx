@@ -8,7 +8,8 @@ import { v4 as uuidv4 } from 'uuid'
 // Import hooks and components
 import { useWidgetConfig } from "@/hooks/useWidgetConfig"
 import { WidgetLauncher } from "@/components/WidgetLauncher"
-import { LOCAL_STORAGE_CONVERSATION_DATA_KEY } from "@/lib/constants"
+import { LOCAL_STORAGE_CHAT_DATA_KEY } from "@/lib/constants"
+import { useChat } from "@/hooks/useChat"
 
 // For easier switching between dev and prod
 const WIDGET_URL = process.env.NODE_ENV === 'production'
@@ -19,41 +20,67 @@ export default function WidgetRoot({ chatbotId }) {
   const [open, setOpen] = useState(false)
   const { config } = useWidgetConfig(chatbotId) // Custom hook handles all config logic
 
-  // Effect for initializing conversation/user IDs
+  // Get chat data from localStorage
+  const [chatData, setChatData] = useState(null)
+
+  useEffect(() => {
+    const data = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CHAT_DATA_KEY) || 'null')
+    setChatData(data)
+
+    // Listen for storage changes (in case chat data is updated elsewhere)
+    const handleStorageChange = () => {
+      const updated = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CHAT_DATA_KEY) || 'null')
+      setChatData(updated)
+    }
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
+
+  // Use the useChat hook to maintain socket connection and track unread messages
+  const { unreadCount } = useChat({
+    chatbotId,
+    userId: chatData?.poshtibot_user_id,
+    chatId: chatData?.poshtibot_chat_id,
+    isOpen: open
+  })
+
+  // Effect for initializing chat/user IDs
   useEffect(() => {
     if (!config.user_flows_data) return
-    if (!localStorage.getItem(LOCAL_STORAGE_CONVERSATION_DATA_KEY)) {
-      const conversation_id = uuidv4()
-      const user_id = uuidv4()
-      const conversationData = {
-        poshtibot_conversation_id: conversation_id,
-        poshtibot_user_id: user_id,
-        agent_status: "none"
-      }
-      localStorage.setItem(LOCAL_STORAGE_CONVERSATION_DATA_KEY, JSON.stringify(conversationData))
 
-      const data = {
-        user_flows_data: config.user_flows_data,
-        conversation_id
-      }
+    if (localStorage.getItem(LOCAL_STORAGE_CHAT_DATA_KEY)) return
 
-      const create_conversation = async () => {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/add_new_conversation_on_widget_lunch`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data)
-        })
-          .then(response => response.json())
-          .then(data => {
-            console.log(data)
-          })
-          .catch(err => console.log(err))
-      }
-
-      create_conversation()
+    const chat_id = uuidv4()
+    const user_id = uuidv4()
+    const newChatData = {
+      poshtibot_chat_id: chat_id,
+      poshtibot_user_id: user_id,
+      agent_status: "none"
     }
+    localStorage.setItem(LOCAL_STORAGE_CHAT_DATA_KEY, JSON.stringify(newChatData))
+    setChatData(newChatData)
+
+    const data = {
+      user_flows_data: config.user_flows_data,
+      chat_id
+    }
+
+    const create_chat = async () => {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/add_new_chat_on_widget_lunch`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+      })
+        .then(response => response.json())
+        .then(data => {
+          console.log(data)
+        })
+        .catch(err => console.log(err))
+    }
+
+    create_chat()
   }, [config])
 
   // Effect for listening to close messages from the iframe
@@ -73,7 +100,7 @@ export default function WidgetRoot({ chatbotId }) {
   return (
     <>
       <AnimatePresence>
-        {!open && <WidgetLauncher config={config} onClick={toggleWidget} />}
+        {!open && <WidgetLauncher config={config} onClick={toggleWidget} unreadCount={unreadCount} />}
       </AnimatePresence>
 
       <Box

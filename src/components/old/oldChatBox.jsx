@@ -22,7 +22,7 @@ const ChatWidget = () => {
     const chatEndRef = useRef(null)
     const fileInputRef = useRef(null)
 
-    const { config, conversationId, userId, allMessages, setAllMessages } = usePoshtibotSetup()
+    const { config, chatId, userId, allMessages, setAllMessages } = usePoshtibotSetup()
 
     const { sendUser, messages, typingUsers, isTyping } = useChat({ userId })
 
@@ -65,8 +65,8 @@ const ChatWidget = () => {
         })
 
         setInput("")
-        sendUser(config.user_flows_data, conversationId, trimmed)
-    }, [input, conversationId, config, sendUser, setAllMessages])
+        sendUser(config.user_flows_data, chatId, trimmed)
+    }, [input, chatId, config, sendUser, setAllMessages])
 
     // const handleFileUpload = (e) => {
     //     const file = e.target.files?.[0]
@@ -82,7 +82,7 @@ const ChatWidget = () => {
         setAnchorEl(null)
     }
 
-    const conversationStarters = [
+    const chatStarters = [
         { id: '1', message: 'در مورد محصولات سوال دارم', enabled: true },
         { id: '2', message: 'وضعیت سفارش من', enabled: true },
         { id: '3', message: 'وضعیت سفارش من', enabled: true },
@@ -101,7 +101,7 @@ const ChatWidget = () => {
         })
 
         setShowInitMsg(false)
-        sendUser(config.user_flows_data, conversationId, starterText)
+        sendUser(config.user_flows_data, chatId, starterText)
     }
 
     // Notification toggle
@@ -267,7 +267,7 @@ const ChatWidget = () => {
 
             {/* Input area */}
             <Box sx={{ px: 1, py: 1, borderTop: '1px solid #e3eded', bgcolor: '#fff' }}>
-                {showInitMsg && conversationStarters.filter(starter => starter.enabled && starter.message.trim()).length > 0 && (
+                {showInitMsg && chatStarters.filter(starter => starter.enabled && starter.message.trim()).length > 0 && (
                     <Box
                         sx={{
                             width: '100%',
@@ -289,7 +289,7 @@ const ChatWidget = () => {
                         }}
                     >
                         <List sx={{ p: 0, ml: .5 }}>
-                            {conversationStarters.filter(s => s.enabled && s.message.trim()).map(starter => (
+                            {chatStarters.filter(s => s.enabled && s.message.trim()).map(starter => (
                                 <ListItem
                                     key={starter.id}
                                     onClick={() => handleStarterClick(starter.message)}

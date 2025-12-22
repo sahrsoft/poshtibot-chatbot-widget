@@ -6,7 +6,8 @@ import { LOCAL_STORAGE_CONFIG_KEY, LOCAL_STORAGE_STARTER_KEY } from '@/lib/const
 // A default config to ensure the widget is always usable, even on API failure.
 const DEFAULT_CONFIG = {
     primary_color: "#00d285",
-    label_text: "از من بپرس 😊",
+    label_text: "",
+    // label_text: "از من بپرس 😊",
     label_color: "#fff",
     label_background_color: "#00d285",
     icon_color: "#fff",

@@ -1,29 +1,113 @@
 'use client'
 
-import { memo, useState, useCallback } from 'react'
+import { memo, useState, useCallback, useRef, useEffect } from 'react'
 import { Box, TextField, IconButton, Popover, Typography } from '@mui/material'
 import { Icon } from '@iconify/react'
 import EmojiPicker from 'emoji-picker-react'
 
-const ChatInput = ({ isTyping, onSendMessage }) => {
+const ChatInput = ({ isTyping, onSendMessage, onTyping, onStopTyping }) => {
   const [input, setInput] = useState("")
   const [anchorEl, setAnchorEl] = useState(null)
 
+  const typingTimeoutRef = useRef(null)
+  const hasEmittedTypingRef = useRef(false)
+
   const handleEmojiClick = useCallback((emoji) => {
     const ch = emoji?.native || emoji?.emoji || (typeof emoji === 'string' ? emoji : '')
-    setInput(prev => prev + ch)
+    const newValue = input + ch
+    setInput(newValue)
     setAnchorEl(null)
-  }, [])
+
+    // Trigger typing event for emoji input
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
+      typingTimeoutRef.current = null
+    }
+
+    // Emit typing if not already emitted
+    if (newValue.trim() && !hasEmittedTypingRef.current && onTyping) {
+      onTyping()
+      hasEmittedTypingRef.current = true
+    }
+
+    // Set timeout to emit stop_typing after user stops typing (2 seconds)
+    typingTimeoutRef.current = setTimeout(() => {
+      if (hasEmittedTypingRef.current && onStopTyping) {
+        onStopTyping()
+        hasEmittedTypingRef.current = false
+      }
+    }, 2000)
+  }, [input, onTyping, onStopTyping])
+
+  // Handle typing with debouncing
+  const handleInputChange = useCallback((e) => {
+    const value = e.target.value
+    setInput(value)
+
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
+      typingTimeoutRef.current = null
+    }
+
+    // If input becomes empty, emit stop_typing immediately
+    if (!value.trim()) {
+      if (hasEmittedTypingRef.current && onStopTyping) {
+        onStopTyping()
+        hasEmittedTypingRef.current = false
+      }
+      return
+    }
+
+    // Emit typing if not already emitted and input has content
+    if (!hasEmittedTypingRef.current && onTyping) {
+      onTyping()
+      hasEmittedTypingRef.current = true
+    }
+
+    // Set timeout to emit stop_typing after user stops typing (2 seconds)
+    typingTimeoutRef.current = setTimeout(() => {
+      if (hasEmittedTypingRef.current && onStopTyping) {
+        onStopTyping()
+        hasEmittedTypingRef.current = false
+      }
+    }, 2000)
+  }, [onTyping, onStopTyping])
 
   const handleSubmit = (e) => {
     e.preventDefault()
     const trimmedMessage = input.trim()
     if (!trimmedMessage) return
 
-    onSendMessage(trimmedMessage)
+    // Clear typing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
+      typingTimeoutRef.current = null
+    }
 
+    // Emit stop_typing when message is sent
+    if (hasEmittedTypingRef.current && onStopTyping) {
+      onStopTyping()
+      hasEmittedTypingRef.current = false
+    }
+
+    onSendMessage(trimmedMessage)
     setInput("")
   }
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+      // Emit stop_typing on unmount if we were typing
+      if (hasEmittedTypingRef.current && onStopTyping) {
+        onStopTyping()
+      }
+    }
+  }, [onStopTyping])
 
 
   return (
@@ -46,7 +130,7 @@ const ChatInput = ({ isTyping, onSendMessage }) => {
           size="small"
           variant="outlined"
           value={input}
-          onChange={(e) => setInput(e.target.value)} // This only re-renders ChatInput
+          onChange={handleInputChange}
           placeholder="پیام خود را وارد کنید"
           fullWidth
           sx={{

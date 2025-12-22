@@ -12,13 +12,13 @@ export default function WidgetRoot({ chatbotId }) {
     const [config, setConfig] = useState({})
 
     useEffect(() => {
-        const conversationData = localStorage.getItem("poshtibot-conversation-data")
-        if (!conversationData) {
-            const conversationData = {
-                "poshtibot_conversation_id": uuidv4(),
+        const chatData = localStorage.getItem("poshtibot-chat-data")
+        if (!chatData) {
+            const chatData = {
+                "poshtibot_chat_id": uuidv4(),
                 "poshtibot_user_id": uuidv4()
             }
-            localStorage.setItem("poshtibot-conversation-data", JSON.stringify(conversationData))
+            localStorage.setItem("poshtibot-chat-data", JSON.stringify(chatData))
         }
         const pwc = JSON.parse(localStorage.getItem("poshtibot-widget-config"))
         setConfig(pwc)

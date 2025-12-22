@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, useCallback } from "react"
-import GetSocket from "@/utils/socket/Socket"
+import GetSocket from "@/utils/socket/socket"
 
 
 export function useChat({ userId }) {
@@ -108,19 +108,19 @@ export function useChat({ userId }) {
     console.log("Joined room:", groupId);
   }, [userId])
 
-  // const sendGroup = useCallback((userFlowsData, conversationId, message) => {
-  //   console.log(userFlowsData, conversationId, message)
+  // const sendGroup = useCallback((userFlowsData, chatId, message) => {
+  //   console.log(userFlowsData, chatId, message)
   //   const socket = socketRef.current
   //   if (!socket || !userId) {
   //     console.warn("Cannot send group — socket or userId missing")
   //     return
   //   }
-  //   socket.emit("group_message", { user_flows_data: userFlowsData, conversation_id: conversationId, message })
-  //   setMessages(prev => [...prev, { sender: "Agent", chat_room: conversationId, message, type: "group", local: true }])
+  //   socket.emit("group_message", { user_flows_data: userFlowsData, chat_id: chatId, message })
+  //   setMessages(prev => [...prev, { sender: "Agent", chat_room: chatId, message, type: "group", local: true }])
   // }, [userId])
 
-  const sendUser = useCallback((userFlowsData, conversationId, message) => {
-    console.log(userFlowsData, conversationId, message)
+  const sendUser = useCallback((userFlowsData, chatId, message) => {
+    console.log(userFlowsData, chatId, message)
     const socket = socketRef.current
     if (!socket || !userId) {
       console.warn("Cannot send group — socket or userId missing")
@@ -128,10 +128,10 @@ export function useChat({ userId }) {
     }
 
     // Ensure user has joined the room first
-    joinGroup(conversationId)
+    joinGroup(chatId)
 
-    socket.emit("user_message", { user_flows_data: userFlowsData, conversation_id: conversationId, message })
-    // setMessages(prev => [...prev, { sender: "User", chat_room: conversationId, message, type: "user", local: true }])
+    socket.emit("user_message", { user_flows_data: userFlowsData, chat_id: chatId, message })
+    // setMessages(prev => [...prev, { sender: "User", chat_room: chatId, message, type: "user", local: true }])
   }, [joinGroup, userId])
 
 
