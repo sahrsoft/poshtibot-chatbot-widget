@@ -1,8 +1,10 @@
 import ChatWidget from "@/components/ChatWidget"
 
-const page = () => {
+const page = async ({ searchParams }) => {
+    const { chatbot_id } = await searchParams
+
     return (
-        <ChatWidget />
+        <ChatWidget chatbotId={chatbot_id} />
     )
 }
 

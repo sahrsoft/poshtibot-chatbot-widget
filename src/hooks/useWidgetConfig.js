@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { LOCAL_STORAGE_CONFIG_KEY, LOCAL_STORAGE_STARTER_KEY } from '@/lib/constants'
+import { getConfigKey, getStarterKey, getChatDataKey, getMessagesKey } from '@/lib/constants'
 
 // A default config to ensure the widget is always usable, even on API failure.
 const DEFAULT_CONFIG = {
@@ -22,7 +22,8 @@ export function useWidgetConfig(chatbotId) {
         if (typeof window === "undefined") return // Prevent SSR issues
 
         try {
-            const cachedConfig = localStorage.getItem(LOCAL_STORAGE_CONFIG_KEY)
+            const configKey = getConfigKey(chatbotId)
+            const cachedConfig = localStorage.getItem(configKey)
             return cachedConfig ? JSON.parse(cachedConfig) : DEFAULT_CONFIG
         } catch (error) {
             console.error("Failed to parse cached config:", error)
@@ -34,7 +35,8 @@ export function useWidgetConfig(chatbotId) {
         if (typeof window === "undefined") return // Prevent SSR issues
 
         try {
-            const cachedStarter = localStorage.getItem(LOCAL_STORAGE_STARTER_KEY)
+            const starterKey = getStarterKey(chatbotId)
+            const cachedStarter = localStorage.getItem(starterKey)
             return cachedStarter ? JSON.parse(cachedStarter) : []
         } catch (error) {
             console.error("Failed to parse cached config:", error)
@@ -45,6 +47,34 @@ export function useWidgetConfig(chatbotId) {
 
     useEffect(() => {
         if (!chatbotId) return
+
+        const configKey = getConfigKey(chatbotId)
+        const starterKey = getStarterKey(chatbotId)
+        const chatDataKey = getChatDataKey(chatbotId)
+        const messagesKey = getMessagesKey(chatbotId)
+
+        // Check if this is a new chatbot by comparing chatbot_id from URL with stored config
+        const cachedConfig = localStorage.getItem(configKey)
+        let storedChatbotId = null
+        
+        if (cachedConfig) {
+            try {
+                const parsedConfig = JSON.parse(cachedConfig)
+                storedChatbotId = parsedConfig.chatbot_id
+            } catch (error) {
+                console.error("Failed to parse cached config:", error)
+            }
+        }
+
+        // If chatbot_id from URL doesn't match stored chatbot_id, clear old data
+        const isNewChatbot = storedChatbotId && storedChatbotId !== chatbotId
+        
+        if (isNewChatbot) {
+            console.log(`New chatbot detected (${chatbotId}). Clearing old data.`)
+            // Clear all data for this chatbot_id key (they're already scoped, but clear to be safe)
+            localStorage.removeItem(chatDataKey)
+            localStorage.removeItem(messagesKey)
+        }
 
         const fetchConfig = async () => {
             try {
@@ -58,20 +88,29 @@ export function useWidgetConfig(chatbotId) {
 
                 if (data?.message) {
                     if (data?.message?.widget_config) {
-                        setConfig(data.message.widget_config)
-                        localStorage.setItem(LOCAL_STORAGE_CONFIG_KEY, JSON.stringify(data.message.widget_config))
+                        // Store chatbot_id in config for future comparison
+                        const configWithId = {
+                            ...data.message.widget_config,
+                            chatbot_id: chatbotId
+                        }
+                        setConfig(configWithId)
+                        localStorage.setItem(configKey, JSON.stringify(configWithId))
                     }
 
                     if (data?.message?.starter_messages && data?.message?.starter_messages != null) {
                         setStarterMessages(data.message.starter_messages)
-                        localStorage.setItem(LOCAL_STORAGE_STARTER_KEY, JSON.stringify(data.message.starter_messages))
+                        localStorage.setItem(starterKey, JSON.stringify(data.message.starter_messages))
                     } else {
                         setStarterMessages([])
-                        localStorage.setItem(LOCAL_STORAGE_STARTER_KEY, "[]")
+                        localStorage.setItem(starterKey, "[]")
                     }
                 } else {
                     // If the API returns a valid but empty response, use default.
-                    setConfig(DEFAULT_CONFIG)
+                    const defaultConfigWithId = {
+                        ...DEFAULT_CONFIG,
+                        chatbot_id: chatbotId
+                    }
+                    setConfig(defaultConfigWithId)
                     setStarterMessages([])
                 }
             } catch (e) {

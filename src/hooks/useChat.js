@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react"
 import getSocket from "@/utils/socket/socket"
-import { LOCAL_STORAGE_CHAT_DATA_KEY, LOCAL_STORAGE_MESSAGES_KEY } from "@/lib/constants"
+import { getChatDataKey, getMessagesKey } from "@/lib/constants"
 
 export function useChat({ chatbotId, userId, chatId, isOpen = true }) {
   const [messages, setMessages] = useState([])
@@ -39,13 +39,17 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true }) {
       console.log("Agent assigned:", data)
       setAgentStatus("joined")
       setAgentName(data.agent_name ?? "پشتیبان")
-      const chatData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CHAT_DATA_KEY))
-      const updated = {
-        ...chatData,
-        agent_status: "joined",
-        agent_name: data.agent_name ?? "پشتیبان"
+      if (!chatbotId) return
+      const chatDataKey = getChatDataKey(chatbotId)
+      const chatData = JSON.parse(localStorage.getItem(chatDataKey) || 'null')
+      if (chatData) {
+        const updated = {
+          ...chatData,
+          agent_status: "joined",
+          agent_name: data.agent_name ?? "پشتیبان"
+        }
+        localStorage.setItem(chatDataKey, JSON.stringify(updated))
       }
-      chatData && localStorage.setItem(LOCAL_STORAGE_CHAT_DATA_KEY, JSON.stringify(updated))
     }
 
     const onAgentMessage = (data) => {
@@ -63,10 +67,12 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true }) {
       })
 
       // Store message in localStorage (with duplicate check)
-      const savedMessages = JSON.parse(localStorage.getItem(LOCAL_STORAGE_MESSAGES_KEY)) || []
+      if (!chatbotId) return
+      const messagesKey = getMessagesKey(chatbotId)
+      const savedMessages = JSON.parse(localStorage.getItem(messagesKey) || '[]')
       if (!savedMessages.some(m => m.id === messageId)) {
         const updatedMessages = [...savedMessages, newMessage]
-        localStorage.setItem(LOCAL_STORAGE_MESSAGES_KEY, JSON.stringify(updatedMessages))
+        localStorage.setItem(messagesKey, JSON.stringify(updatedMessages))
       }
 
       // Track unread messages when widget is closed
@@ -88,10 +94,12 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true }) {
       })
 
       // Store message in localStorage (with duplicate check)
-      const savedMessages = JSON.parse(localStorage.getItem(LOCAL_STORAGE_MESSAGES_KEY)) || []
+      if (!chatbotId) return
+      const messagesKey = getMessagesKey(chatbotId)
+      const savedMessages = JSON.parse(localStorage.getItem(messagesKey) || '[]')
       if (!savedMessages.some(m => m.id === messageId)) {
         const updatedMessages = [...savedMessages, newMessage]
-        localStorage.setItem(LOCAL_STORAGE_MESSAGES_KEY, JSON.stringify(updatedMessages))
+        localStorage.setItem(messagesKey, JSON.stringify(updatedMessages))
       }
 
       // Track unread messages when widget is closed

@@ -4,23 +4,27 @@
 import { useEffect, useState } from "react"
 import { Box, Button, Paper, Typography } from "@mui/material"
 import { TextField } from "@mui/material"
-import { LOCAL_STORAGE_CHAT_DATA_KEY } from "@/lib/constants"
+import { getChatDataKey } from "@/lib/constants"
 
-const CollectLeads = ({ config }) => {
+const CollectLeads = ({ config, chatbotId }) => {
 
   useEffect(() => {
-    const cachedConfig = localStorage.getItem(LOCAL_STORAGE_CHAT_DATA_KEY)
+    if (!chatbotId) return
+    const chatDataKey = getChatDataKey(chatbotId)
+    const cachedConfig = localStorage.getItem(chatDataKey)
     if (cachedConfig) {
       const parsed = JSON.parse(cachedConfig)
       setFormData(f => ({ ...f, chat_id: parsed.poshtibot_chat_id || "" }))
     }
-  }, [])
+  }, [chatbotId])
 
   const [formData, setFormData] = useState(() => {
     if (typeof window === "undefined") return { chat_id: "", name: "", email: "", mobile: "" }
 
     try {
-      const cachedConfig = localStorage.getItem(LOCAL_STORAGE_CHAT_DATA_KEY)
+      if (!chatbotId) return { chat_id: "", name: "", email: "", mobile: "" }
+      const chatDataKey = getChatDataKey(chatbotId)
+      const cachedConfig = localStorage.getItem(chatDataKey)
       const chat_id = cachedConfig ? JSON.parse(cachedConfig).poshtibot_chat_id : ""
       return { chat_id, name: "", email: "", mobile: "" }
     } catch {
@@ -86,12 +90,14 @@ const CollectLeads = ({ config }) => {
       .then(response => response.json())
       .then(data => {
         console.log(data)
-        const chatData = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CHAT_DATA_KEY))
+        if (!chatbotId) return
+        const chatDataKey = getChatDataKey(chatbotId)
+        const chatData = JSON.parse(localStorage.getItem(chatDataKey) || '{}')
         const updated = {
           ...chatData,
           leads_collected: true
         }
-        localStorage.setItem(LOCAL_STORAGE_CHAT_DATA_KEY, JSON.stringify(updated))
+        localStorage.setItem(chatDataKey, JSON.stringify(updated))
         window.location.reload()
       })
       .catch(err => console.log(err))

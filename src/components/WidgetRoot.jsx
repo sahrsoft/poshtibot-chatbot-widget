@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid'
 // Import hooks and components
 import { useWidgetConfig } from "@/hooks/useWidgetConfig"
 import { WidgetLauncher } from "@/components/WidgetLauncher"
-import { LOCAL_STORAGE_CHAT_DATA_KEY } from "@/lib/constants"
+import { getChatDataKey } from "@/lib/constants"
 import { useChat } from "@/hooks/useChat"
 
 // For easier switching between dev and prod
@@ -24,17 +24,20 @@ export default function WidgetRoot({ chatbotId }) {
   const [chatData, setChatData] = useState(null)
 
   useEffect(() => {
-    const data = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CHAT_DATA_KEY) || 'null')
+    if (!chatbotId) return
+    
+    const chatDataKey = getChatDataKey(chatbotId)
+    const data = JSON.parse(localStorage.getItem(chatDataKey) || 'null')
     setChatData(data)
 
     // Listen for storage changes (in case chat data is updated elsewhere)
     const handleStorageChange = () => {
-      const updated = JSON.parse(localStorage.getItem(LOCAL_STORAGE_CHAT_DATA_KEY) || 'null')
+      const updated = JSON.parse(localStorage.getItem(chatDataKey) || 'null')
       setChatData(updated)
     }
     window.addEventListener('storage', handleStorageChange)
     return () => window.removeEventListener('storage', handleStorageChange)
-  }, [])
+  }, [chatbotId])
 
   // Use the useChat hook to maintain socket connection and track unread messages
   const { unreadCount } = useChat({
@@ -46,9 +49,10 @@ export default function WidgetRoot({ chatbotId }) {
 
   // Effect for initializing chat/user IDs
   useEffect(() => {
-    if (!config.user_flows_data) return
+    if (!config.user_flows_data || !chatbotId) return
 
-    if (localStorage.getItem(LOCAL_STORAGE_CHAT_DATA_KEY)) return
+    const chatDataKey = getChatDataKey(chatbotId)
+    if (localStorage.getItem(chatDataKey)) return
 
     const chat_id = uuidv4()
     const user_id = uuidv4()
@@ -57,7 +61,7 @@ export default function WidgetRoot({ chatbotId }) {
       poshtibot_user_id: user_id,
       agent_status: "none"
     }
-    localStorage.setItem(LOCAL_STORAGE_CHAT_DATA_KEY, JSON.stringify(newChatData))
+    localStorage.setItem(chatDataKey, JSON.stringify(newChatData))
     setChatData(newChatData)
 
     const data = {
@@ -81,7 +85,7 @@ export default function WidgetRoot({ chatbotId }) {
     }
 
     create_chat()
-  }, [config])
+  }, [config, chatbotId])
 
   // Effect for listening to close messages from the iframe
   useEffect(() => {
