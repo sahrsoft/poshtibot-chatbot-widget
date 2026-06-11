@@ -11,6 +11,11 @@
   "dependencies": {
     "@emotion/cache": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@iconify-icons/fa6-brands": "^1.2.11",
+    "@iconify-icons/heroicons": "^1.2.9",
+    "@iconify-icons/icon-park-outline": "^1.2.11",
+    "@iconify-icons/solar": "^1.2.3",
+    "@iconify-icons/svg-spinners": "^1.2.0",
     "@iconify/react": "^6.0.2",
     "@mui/icons-material": "^7.3.6",
     "@mui/material": "^7.3.6",
@@ -19,15 +24,19 @@
     "emoji-picker-react": "^4.14.0",
     "framer-motion": "^12.23.24",
     "iconify": "^1.4.0",
-    "next": "^16.2.2",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
+    "next": "^16.2.9",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
     "socket.io-client": "^4.8.1",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "eslint": "^9",
-    "eslint-config-next": "^16.1.1"
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.9",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-import-resolver-alias": "^1.1.2",
+    "eslint-plugin-import": "^2.32.0",
+    "prettier": "^3.8.4"
   }
 }

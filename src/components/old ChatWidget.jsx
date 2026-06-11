@@ -13,7 +13,7 @@ import CollectLeads from "./CollectLeads"
 import { getChatDataKey, getMessagesKey } from "@/lib/constants"
 import PendingForAgent from "./PendingForAgent"
 
-const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
+const ChatWidget = ({ chatbotId: propChatbotId }) => {
   const [notifications, setNotifications] = useState(true)
   const [showInitMsg, setShowInitMsg] = useState(true)
   const [leadsStatus, setLeadsStatus] = useState()
@@ -99,7 +99,6 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
   const toggleNotifications = useCallback(() => setNotifications(prev => !prev), [])
 
   const handleCloseChat = useCallback(() => {
-    setOpen(false)
     window.parent.postMessage({ type: "CLOSE_CHAT_WIDGET" }, "*")
   }, [])
 
@@ -131,70 +130,63 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
   return (
     <Box
       sx={{
-        borderRadius: 7,
-        overflow: 'auto'
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundImage: 'linear-gradient(0deg, rgba(0,0,0,0.5), rgba(0,0,0,0.8)),url(./images/widgetBg1.jpg)',
+        backgroundSize: 'cover'
       }}
     >
-      <Box
-        sx={{
-          height: '600px',
-          display: 'flex',
-          flexDirection: 'column',
-          backgroundImage: 'linear-gradient(0deg, rgba(0,0,0,0.5), rgba(0,0,0,0.8)),url(./images/widgetBg1.jpg)',
-          backgroundSize: 'cover'
-        }}
-      >
-        <ChatHeader
-          notifications={notifications}
-          onToggleNotifications={toggleNotifications}
-          onCloseChat={handleCloseChat}
-          agentStatus={agentStatus}
-          agentName={agentName}
-        />
+      <ChatHeader
+        notifications={notifications}
+        onToggleNotifications={toggleNotifications}
+        onCloseChat={handleCloseChat}
+        agentStatus={agentStatus}
+        agentName={agentName}
+      />
 
-        {leadsStatus ? (
-          <CollectLeads config={config} chatbotId={activeChatbotId} />
-        ) : (
-          <>
-            <MessageList
-              allMessages={allMessages}
-              isTyping={isTyping}
-              chatEndRef={chatEndRef}
-            />
+      {leadsStatus ? (
+        <CollectLeads config={config} chatbotId={activeChatbotId} />
+      ) : (
+        <>
+          <MessageList
+            allMessages={allMessages}
+            isTyping={isTyping}
+            chatEndRef={chatEndRef}
+          />
 
-            {agentStatus === "none" &&
-              <AgentButton chatbotId={activeChatbotId} isVisible={isAgentButtonVisible} userId={userId} chatId={chatId} userFlowsData={config.user_flows_data} />
-            }
+          {agentStatus === "none" &&
+            <AgentButton chatbotId={activeChatbotId} isVisible={isAgentButtonVisible} userId={userId} chatId={chatId} userFlowsData={config.user_flows_data} />
+          }
 
-            <Box
-              sx={{
-                px: .5,
-                borderTop: '1px solid #e3eded',
-                bgcolor: '#fff'
-              }}
-            >
-              {showInitMsg && (agentStatus === "none") && (
-                <ChatStarters
-                  starters={chatStarters}
-                  onStarterClick={handleStarterClick}
-                />
-              )}
+          <Box
+            sx={{
+              px: .5,
+              borderTop: '1px solid #e3eded',
+              bgcolor: '#fff'
+            }}
+          >
+            {showInitMsg && (agentStatus === "none") && (
+              <ChatStarters
+                starters={chatStarters}
+                onStarterClick={handleStarterClick}
+              />
+            )}
 
-              {agentStatus === "pending" ? (
-                <PendingForAgent handleCancelRequest={handleCancelRequest} />
-              ) : (
-                <ChatInput
-                  isTyping={isTyping}
-                  onSendMessage={handleSendMessage}
-                  onTyping={emitTyping}
-                  onStopTyping={emitStopTyping}
-                />
-              )}
+            {agentStatus === "pending" ? (
+              <PendingForAgent handleCancelRequest={handleCancelRequest} />
+            ) : (
+              <ChatInput
+                isTyping={isTyping}
+                onSendMessage={handleSendMessage}
+                onTyping={emitTyping}
+                onStopTyping={emitStopTyping}
+              />
+            )}
 
-            </Box>
-          </>
-        )}
-      </Box>
+          </Box>
+        </>
+      )}
     </Box>
   )
 }

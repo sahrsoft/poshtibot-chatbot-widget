@@ -96,7 +96,6 @@ export default function WidgetRoot({ chatbotId }) {
         event.data?.type === "OUTSIDE_CLICK"
       ) {
         setOpen(false)
-
         window.parent.postMessage(
           {
             type: "CLOSE_WIDGET"
@@ -110,19 +109,27 @@ export default function WidgetRoot({ chatbotId }) {
   }, [])
 
   useEffect(() => {
-    const sendMessage = () => {
-      window.parent.postMessage(
-        {
-          type: "POSITION",
-          position: config?.widget_position
-        },
-        "*"
-      )
+    const handleClickOutside = (event) => {
 
+      if (!open) return
+
+      if (
+        widgetRef.current &&
+        !widgetRef.current.contains(event.target)
+      ) {
+        setOpen(false)
+      }
     }
-    window.addEventListener("message", sendMessage)
-    return () => window.removeEventListener("message", sendMessage)
-  }, [])
+
+    document.addEventListener("mousedown", handleClickOutside)
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      )
+    }
+  }, [open])
 
   // Memoize the toggle function
   const toggleWidget = useCallback(() => {
@@ -145,7 +152,6 @@ export default function WidgetRoot({ chatbotId }) {
 
   }, [])
 
-
   return (
     <>
       <AnimatePresence>
@@ -154,27 +160,30 @@ export default function WidgetRoot({ chatbotId }) {
 
       <Box
         sx={{
-          position: "fixed",
-          bottom: 40,
-          [config?.widget_position || "right"]: 40,
-          width: 380,
-          height: 600,
-          borderRadius: 7,
-          boxShadow: 'rgba(0, 0, 0, 0.2) 0px 5px 10px 0px',
-          transformOrigin: config?.widget_position === 'left' ? 'bottom left' : 'bottom right',
-          transition: "all 0.3s ease-in-out",
-          // Animate with opacity and scale for better performance
-          opacity: open ? 1 : 0,
-          transform: open ? "scale(1)" : "scale(0)",
-          visibility: open ? 'visible' : 'hidden',
-          zIndex: 9998,
+          width: "100%",
+          height: "100%",
+          borderRadius: { xs: 0, sm: "28px" },
+          overflow: "hidden",
           background: "#fff",
+          boxShadow:
+            "0 12px 28px rgba(0,0,0,.2)",
         }}
       >
-        {/* Conditionally render iframe only when opening to save resources */}
         {open && (
-          <ChatWidget chatbotId={chatbotId} setOpen={setOpen} />
+          <ChatWidget chatbotId={chatbotId} />
         )}
+
+        {/* {open && (
+          <iframe
+            src={`${WIDGET_URL}?chatbot_id=${chatbotId}`}
+            title="Poshtibot chat"
+            style={{
+              width: "100%",
+              height: "100%",
+              border: "none",
+            }}
+          />
+        )} */}
       </Box>
     </>
   )

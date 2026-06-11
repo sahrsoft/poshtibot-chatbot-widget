@@ -4,6 +4,9 @@ import { memo, useState, useCallback, useRef, useEffect } from 'react'
 import { Box, TextField, IconButton, Popover, Typography } from '@mui/material'
 import { Icon } from '@iconify/react'
 import EmojiPicker from 'emoji-picker-react'
+import stickerCircleLinear from '@iconify-icons/solar/sticker-circle-linear'
+import telegram from '@iconify-icons/fa6-brands/telegram'
+
 
 const ChatInput = ({ isTyping, onSendMessage, onTyping, onStopTyping }) => {
   const [input, setInput] = useState("")
@@ -121,7 +124,7 @@ const ChatInput = ({ isTyping, onSendMessage, onTyping, onStopTyping }) => {
           onClick={(e) => setAnchorEl(e.currentTarget)}
           sx={{ p: 1, border: '1px solid #e3eded', '&:hover': { borderColor: 'rgb(0, 210, 133)' } }}
         >
-          <Icon icon="solar:sticker-circle-linear" width="20" height="20" style={{ color: '#577e7d' }} />
+          <Icon icon={stickerCircleLinear} width="20" height="20" style={{ color: '#577e7d' }} />
         </IconButton>
 
         <TextField
@@ -152,22 +155,22 @@ const ChatInput = ({ isTyping, onSendMessage, onTyping, onStopTyping }) => {
         />
 
         <IconButton type="submit" sx={{ p: 0.5 }} disabled={!input.trim()}>
-          <Icon icon="fa6-brands:telegram" fontSize={32} style={{ color: input.trim() ? "rgb(0, 210, 133)" : "#c0c0c0" }} />
+          <Icon icon={telegram} fontSize={32} style={{ color: input.trim() ? "rgb(0, 210, 133)" : "#c0c0c0" }} />
         </IconButton>
 
         {/* {input ? (
-                    <IconButton type="submit" sx={{ p: 0.5 }}>
-                        <Icon icon="fa6-brands:telegram" fontSize={32} style={{ color: 'rgb(0, 210, 133)' }} />
-                    </IconButton>
-                ) : (
-                    <IconButton onClick={() => fileInputRef.current.click()} sx={{
-                        p: 1.25, border: '1px solid #e3eded', '&:hover': {
-                            borderColor: 'rgb(0, 210, 133)'
-                        },
-                    }}>
-                        <Icon icon="solar:paperclip-linear" width="20" height="20" style={{ color: '#577e7d' }} />
-                    </IconButton>
-                )} */}
+          <IconButton type="submit" sx={{ p: 0.5 }}>
+            <Icon icon="fa6-brands:telegram" fontSize={32} style={{ color: 'rgb(0, 210, 133)' }} />
+          </IconButton>
+        ) : (
+          <IconButton onClick={() => fileInputRef.current.click()} sx={{
+            p: 1.25, border: '1px solid #e3eded', '&:hover': {
+              borderColor: 'rgb(0, 210, 133)'
+            },
+          }}>
+            <Icon icon="solar:paperclip-linear" width="20" height="20" style={{ color: '#577e7d' }} />
+          </IconButton>
+        )} */}
 
       </Box>
       <Typography textAlign="center" sx={{ color: '#577e7d', fontSize: 12, pt: 1 }}>

@@ -13,7 +13,7 @@ export function usePoshtibotSetup(chatbotId) {
 
     useEffect(() => {
         if (!chatbotId) return
-        
+
         let intervalId = null
 
         const loadFromLocalStorage = () => {
@@ -22,7 +22,7 @@ export function usePoshtibotSetup(chatbotId) {
                 const chatDataKey = getChatDataKey(chatbotId)
                 const messagesKey = getMessagesKey(chatbotId)
                 const starterKey = getStarterKey(chatbotId)
-                
+
                 const chatData = JSON.parse(localStorage.getItem(chatDataKey) || '{}')
                 const pwc = JSON.parse(localStorage.getItem(configKey) || '{}')
                 const savedMessages = JSON.parse(localStorage.getItem(messagesKey) || '[]')

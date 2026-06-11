@@ -1,5 +1,6 @@
 import { Icon } from "@iconify/react"
 import { Box, Button, Typography } from "@mui/material"
+import threeDotsFade from '@iconify-icons/svg-spinners/3-dots-fade'
 
 const PendingForAgent = ({ handleCancelRequest }) => {
   return (
@@ -7,7 +8,7 @@ const PendingForAgent = ({ handleCancelRequest }) => {
       <Typography textAlign={'center'}>
         درخواست شما ارسال شد، لطفا تا پیوستن اولین پشتیبان صبر کنید
         <Icon
-          icon="svg-spinners:3-dots-fade"
+          icon={threeDotsFade}
           width="24"
           height="24"
           style={{ marginBottom: -10, marginRight: 5, transform: 'rotate(180deg)' }}

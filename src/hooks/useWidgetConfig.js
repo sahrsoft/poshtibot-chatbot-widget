@@ -56,7 +56,7 @@ export function useWidgetConfig(chatbotId) {
         // Check if this is a new chatbot by comparing chatbot_id from URL with stored config
         const cachedConfig = localStorage.getItem(configKey)
         let storedChatbotId = null
-        
+
         if (cachedConfig) {
             try {
                 const parsedConfig = JSON.parse(cachedConfig)
@@ -68,7 +68,7 @@ export function useWidgetConfig(chatbotId) {
 
         // If chatbot_id from URL doesn't match stored chatbot_id, clear old data
         const isNewChatbot = storedChatbotId && storedChatbotId !== chatbotId
-        
+
         if (isNewChatbot) {
             console.log(`New chatbot detected (${chatbotId}). Clearing old data.`)
             // Clear all data for this chatbot_id key (they're already scoped, but clear to be safe)
@@ -86,16 +86,18 @@ export function useWidgetConfig(chatbotId) {
                 }
                 const data = await res.json()
 
+
                 if (data?.message) {
-                    if (data?.message?.widget_config) {
-                        // Store chatbot_id in config for future comparison
-                        const configWithId = {
-                            ...data.message.widget_config,
-                            chatbot_id: chatbotId
-                        }
-                        setConfig(configWithId)
-                        localStorage.setItem(configKey, JSON.stringify(configWithId))
+                  if (data?.message?.widget_config) {
+                    // Store chatbot_id in config for future comparison
+                    const configWithId = {
+                      ...data.message.widget_config,
+                      chatbot_id: chatbotId
                     }
+                    localStorage.setItem(configKey, JSON.stringify(configWithId))
+                    setConfig(configWithId)
+                  }
+                  console.log(configWithId)
 
                     if (data?.message?.starter_messages && data?.message?.starter_messages != null) {
                         setStarterMessages(data.message.starter_messages)

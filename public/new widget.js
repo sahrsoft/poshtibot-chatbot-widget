@@ -1,4 +1,5 @@
-(async () => {
+(() => {
+
   const script = document.currentScript
   const chatbotId = script.getAttribute("data-chatbot-id")
 
@@ -7,32 +8,41 @@
     return
   }
 
-  let position = "right"
-  const apiUrl = `https://server.poshtibot.com/api/method/poshtibot.api.get_widget_config?chatbot_id=${chatbotId}`
-  const response = await fetch(apiUrl)
-  if (!response.ok) {
-    position = "right"
-  }
-  const data = await response.json()
-  position = data.message.widget_config.widget_position
-
   // -----------------------------------
   // CREATE IFRAME
   // -----------------------------------
 
   const iframe = document.createElement("iframe")
-  iframe.src = `https://widget.poshtibot.com/widget?chatbot_id=${chatbotId}`
+
+  iframe.src =
+    `https://widget.poshtibot.com/widget?chatbot_id=${chatbotId}`
+
+  iframe.id = "poshtibot-widget-frame"
+
   iframe.style.cssText = `
     position: fixed;
-    bottom: 0;
-    ${position}: 0;
-    width: 100%;
-    height: 100%;
-    border: none;
-    z-index: 9999;
-  `
-  document.body.appendChild(iframe)
+    bottom: 24px;
+    right: 24px;
 
+    width: 80px;
+    height: 80px;
+
+    border: none;
+    background: transparent;
+
+    z-index: 999999;
+
+    overflow: hidden;
+
+    transition:
+      width 0.25s ease,
+      height 0.25s ease;
+
+    max-width: calc(100vw - 20px);
+    max-height: calc(100vh - 20px);
+  `
+
+  document.body.appendChild(iframe)
 
   // -----------------------------------
   // LISTEN FOR OPEN/CLOSE EVENTS
@@ -50,25 +60,13 @@
         iframe.style.width = "100vw"
         iframe.style.height = "100vh"
 
-        iframe.style.bottom = "0"
         iframe.style.right = "0"
+        iframe.style.bottom = "0"
 
       } else {
 
-        iframe.style.width = "430px"
-        iframe.style.height = "640px"
-        iframe.style.borderRadius = "28px"
-        // iframe.style.bottom = "40px"
-
-        // if (position === "right") {
-        //   iframe.style.right = "40px"
-        // } else {
-        //   iframe.style.left = "40px"
-        // }
-
-        // setTimeout(() => {
-        //   iframe.style.boxShadow = "0 12px 28px 0 hsla(0,0%,0%,.2), 0 2px 4px 0 hsla(0,0%,0%,.1)"
-        // }, 300)
+        iframe.style.width = "380px"
+        iframe.style.height = "700px"
 
       }
     }
@@ -76,12 +74,11 @@
     // CLOSE
     if (event.data.type === "CLOSE_WIDGET") {
 
-      iframe.style.width = "auto"
-      iframe.style.height = "auto"
+      iframe.style.width = "80px"
+      iframe.style.height = "80px"
 
-      // iframe.style.right = "0"
-      // iframe.style.bottom = "0"
-      iframe.style.boxShadow = "none"
+      iframe.style.right = "24px"
+      iframe.style.bottom = "24px"
     }
   })
 
@@ -89,7 +86,7 @@
   // OUTSIDE CLICK
   // -----------------------------------
 
-  document.addEventListener("mousedown", (event) => {
+  document.addEventListener("mousedown", function (event) {
 
     const rect = iframe.getBoundingClientRect()
 

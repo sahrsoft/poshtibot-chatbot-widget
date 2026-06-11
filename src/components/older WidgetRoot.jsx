@@ -10,12 +10,11 @@ import { useWidgetConfig } from "@/hooks/useWidgetConfig"
 import { WidgetLauncher } from "@/components/WidgetLauncher"
 import { getChatDataKey } from "@/lib/constants"
 import { useChat } from "@/hooks/useChat"
-import ChatWidget from "./ChatWidget"
 
 // For easier switching between dev and prod
-// const WIDGET_URL = process.env.NODE_ENV === 'production'
-//   ? 'https://widget.poshtibot.com/chat'
-//   : 'http://localhost:3000/chat'
+const WIDGET_URL = process.env.NODE_ENV === 'production'
+  ? 'https://widget.poshtibot.com/chat'
+  : 'http://localhost:3000/chat'
 
 export default function WidgetRoot({ chatbotId }) {
   const [open, setOpen] = useState(false)
@@ -91,60 +90,16 @@ export default function WidgetRoot({ chatbotId }) {
   // Effect for listening to close messages from the iframe
   useEffect(() => {
     const handleMessage = (event) => {
-      if (
-        event.data?.type === "CLOSE_CHAT_WIDGET" ||
-        event.data?.type === "OUTSIDE_CLICK"
-      ) {
+      if (event.data?.type === "CLOSE_CHAT_WIDGET") {
         setOpen(false)
-
-        window.parent.postMessage(
-          {
-            type: "CLOSE_WIDGET"
-          },
-          "*"
-        )
       }
     }
     window.addEventListener("message", handleMessage)
     return () => window.removeEventListener("message", handleMessage)
   }, [])
 
-  useEffect(() => {
-    const sendMessage = () => {
-      window.parent.postMessage(
-        {
-          type: "POSITION",
-          position: config?.widget_position
-        },
-        "*"
-      )
-
-    }
-    window.addEventListener("message", sendMessage)
-    return () => window.removeEventListener("message", sendMessage)
-  }, [])
-
   // Memoize the toggle function
-  const toggleWidget = useCallback(() => {
-
-    setOpen(prev => {
-
-      const next = !prev
-
-      window.parent.postMessage(
-        {
-          type: next
-            ? "OPEN_WIDGET"
-            : "CLOSE_WIDGET"
-        },
-        "*"
-      )
-
-      return next
-    })
-
-  }, [])
-
+  const toggleWidget = useCallback(() => setOpen(prev => !prev), [])
 
   return (
     <>
@@ -155,12 +110,13 @@ export default function WidgetRoot({ chatbotId }) {
       <Box
         sx={{
           position: "fixed",
-          bottom: 40,
-          [config?.widget_position || "right"]: 40,
-          width: 380,
-          height: 600,
-          borderRadius: 7,
-          boxShadow: 'rgba(0, 0, 0, 0.2) 0px 5px 10px 0px',
+          bottom: { xs: 0, sm: 40 },
+          [config?.widget_position || "right"]: { xs: 0, sm: 40 },
+          width: { xs: '100%', sm: 380 },
+          height: { xs: '100%', sm: 600 },
+          borderRadius: { xs: 0, sm: 7 },
+          // overflow: "hidden",
+          boxShadow: '0 12px 28px 0 hsla(0,0%,0%,.2), 0 2px 4px 0 hsla(0,0%,0%,.1)',
           transformOrigin: config?.widget_position === 'left' ? 'bottom left' : 'bottom right',
           transition: "all 0.3s ease-in-out",
           // Animate with opacity and scale for better performance
@@ -173,7 +129,11 @@ export default function WidgetRoot({ chatbotId }) {
       >
         {/* Conditionally render iframe only when opening to save resources */}
         {open && (
-          <ChatWidget chatbotId={chatbotId} setOpen={setOpen} />
+          <iframe
+            src={`${WIDGET_URL}?chatbot_id=${chatbotId}`}
+            title="Poshtibot chat"
+            style={{ width: "100%", height: "100%", border: "none", borderRadius: "28px" }}
+          />
         )}
       </Box>
     </>

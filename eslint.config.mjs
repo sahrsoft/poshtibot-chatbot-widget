@@ -1,25 +1,49 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
+import { defineConfig, globalIgnores } from "eslint/config"
+import nextVitals from "eslint-config-next/core-web-vitals"
+import prettier from "eslint-config-prettier"
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  // Override default ignores of eslint-config-next.
 
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
+  // disables ESLint rules that conflict with Prettier
+  prettier,
 
-const eslintConfig = [
-  ...compat.extends("next/core-web-vitals"),
   {
-    ignores: [
-      "node_modules/**",
-      ".next/**",
-      "out/**",
-      "build/**",
-      "next-env.d.ts",
-    ],
-  },
-];
+    rules: {
+      // 🔥 Best practice rules
+      "prefer-const": "error",
+      "no-var": "error",
+      "no-debugger": "error",
 
-export default eslintConfig;
+      // ⚠️ logging control
+      "no-console": ["warn", { allow: ["warn", "error"] }],
+
+      // 🧠 code safety
+      eqeqeq: "error",
+      "no-undef": "error",
+      "no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+
+      // 🧩 your style (no semicolons, no commas)
+      semi: ["error", "never"],
+      "comma-dangle": ["error", "never"],
+
+      // ⚛️ React safety (Next.js friendly)
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
+
+      // 🚀 Next.js improvements
+      "@next/next/no-img-element": "warn"
+    }
+  },
+
+  globalIgnores([
+    // Default ignores of eslint-config-next:
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts"
+  ])
+])
+
+export default eslintConfig

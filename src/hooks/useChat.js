@@ -119,15 +119,15 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true }) {
     }
 
     // --- Typing Indicator Handlers ---
-    const onUserTyping = ({ userId: typingUserId }) => {
+    const onUserTyping = (userId) => {
       setTypingUsers((prev) =>
-        prev.includes(typingUserId) ? prev : [...prev, typingUserId]
-      )
-    }
+        prev.includes(userId.chat_id) ? prev : [...prev, userId.chat_id]
+    )
+  }
 
-    // The logic is now correct. It only stops "typing" if no one is left.
-    const onUserStopTyping = ({ userId: typingUserId }) => {
-      setTypingUsers((prev) => prev.filter((id) => id !== typingUserId))
+  // The logic is now correct. It only stops "typing" if no one is left.
+  const onUserStopTyping = (userId) => {
+      setTypingUsers((prev) => prev.filter((id) => id !== userId.chat_id))
     }
 
     // --- Debug Listeners (Good to keep) ---
@@ -141,7 +141,6 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true }) {
     socket.on("message:agent", onAgentMessage)
     socket.on('user_typing', onUserTyping)
     socket.on('user_stop_typing', onUserStopTyping)
-
 
     socket.on("message:error", onError)
     socket.on("message:poshtibot", onPoshtibotMessage)
@@ -270,7 +269,6 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true }) {
   }, [chatId])
 
   const isTyping = typingUsers.length > 0
-
 
   return {
     messages,
