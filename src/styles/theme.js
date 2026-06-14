@@ -3,30 +3,27 @@
 import { createTheme } from '@mui/material/styles'
 
 const theme = createTheme({
-    cssVariables: true,
-    typography: {
-        fontFamily: 'Vazir',
-    },
-    colorSchemes: {
-        light: {
-            palette: {
-                gradient:
-                    'linear-gradient(to left, var(--mui-palette-primary-main), var(--mui-palette-primary-dark))',
-                border: {
-                    subtle: 'var(--mui-palette-neutral-200)',
-                },
-            },
-        },
-        dark: {
-            palette: {
-                gradient:
-                    'linear-gradient(to left, var(--mui-palette-primary-light), var(--mui-palette-primary-main))',
-                border: {
-                    subtle: 'var(--mui-palette-neutral-600)',
-                },
-            },
-        },
-    },
-});
+  cssVariables: true,
+  typography: {
+    fontFamily: 'Vazir'
+  },
+  palette: {
+    mode: 'light',
+    primary: {
+      main: '#00d285'
+    }
+  },
+  components: {
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderWidth: 1
+          }
+        }
+      }
+    }
+  }
+})
 
 export default theme

@@ -1,41 +1,77 @@
-import { io } from "socket.io-client"
-
-let socket
-let currentSocketUserId = null // Track which user the socket is for
+import { io } from 'socket.io-client'
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL
+const SOCKET_OPTIONS = {
+  path: '/fsocket/socket.io',
+  transports: ['websocket'],
+  reconnection: true,
+  reconnectionAttempts: Infinity,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
+  randomizationFactor: 0.5
+}
 
-export default function getSocket(userId) {
+let socket = null
+let currentUserId = null
+let connectionListeners = []
+
+function notifyListeners(event, ...args) {
+  for (const listener of connectionListeners) {
+    try {
+      listener(event, ...args)
+    } catch {
+      // Swallow listener errors
+    }
+  }
+}
+
+export function getSocket(userId) {
   if (!userId) return null
 
-  // 1. If socket exists but for a DIFFERENT user, disconnect and create a new one
-  if (socket && currentSocketUserId !== userId) {
-    socket.disconnect()
-    socket = null
+  if (socket && currentUserId !== userId) {
+    disconnectSocket()
   }
 
-  // 2. If socket doesn't exist (or was just disconnected), create a new one
   if (!socket) {
-    socket = io(SOCKET_URL, {
-      path: "/fsocket/socket.io",
-      transports: ['websocket'],
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      randomizationFactor: 0.5,     // Jitter to prevent all clients hammering at once
-      // timeout: 20_000
+    socket = io(SOCKET_URL, SOCKET_OPTIONS)
+    currentUserId = userId
+
+    socket.on('connect', () => {
+      notifyListeners('connect', socket.id)
     })
 
-    currentSocketUserId = userId // Store the user for this socket
+    socket.on('disconnect', (reason) => {
+      notifyListeners('disconnect', reason)
+    })
+
+    socket.on('connect_error', (err) => {
+      notifyListeners('connect_error', err.message)
+    })
   }
+
   return socket
 }
 
-export const disconnectSocket = () => {
+export function getCurrentSocket() {
+  return socket
+}
+
+export function onConnectionEvent(listener) {
+  connectionListeners.push(listener)
+  return () => {
+    connectionListeners = connectionListeners.filter((l) => l !== listener)
+  }
+}
+
+export function disconnectSocket() {
   if (socket) {
+    socket.removeAllListeners()
     socket.disconnect()
     socket = null
-    currentSocketUserId = null
   }
+  currentUserId = null
+}
+
+export function getCurrentUserId() {
+  return currentUserId
 }

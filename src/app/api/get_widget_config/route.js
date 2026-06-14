@@ -9,21 +9,19 @@ export async function GET(request) {
       return NextResponse.json({ error: 'chatbot_id is required' }, { status: 400 })
     }
 
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_SERVER_URL}.get_widget_config?chatbot_id=${chatbotId}`
+    const apiUrl = `${process.env.NEXT_PUBLIC_API_SERVER_URL}.get_widget_config?chatbot_id=${encodeURIComponent(chatbotId)}`
     const response = await fetch(apiUrl)
 
-    // if (!response.ok) {
-    //   return NextResponse.json(
-    //     { error: 'Failed to fetch widget config', status: response.status },
-    //     { status: response.status }
-    //   )
-    // }
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: `Upstream API returned ${response.status}` },
+        { status: response.status }
+      )
+    }
 
     const data = await response.json()
-    console.log(data)
     return NextResponse.json(data)
   } catch (error) {
-    console.log(error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

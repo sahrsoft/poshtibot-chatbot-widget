@@ -3,16 +3,8 @@
 import Image from "next/image"
 import { Box } from "@mui/material"
 import { motion } from "framer-motion"
-import { useEffect, useState } from "react"
 
 export function WidgetLauncher({ config, onClick, unreadCount = 0 }) {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) return null // Prevent hydration mismatch
 
   const dir = config?.widget_position === "right" ? "rtl" : "ltr"
   const positionSide = config?.widget_position || "right"
@@ -54,7 +46,7 @@ export function WidgetLauncher({ config, onClick, unreadCount = 0 }) {
           position: "relative",
           "&:hover": {
             transform: "scale(1.08)",
-            transition: "transform 0.3s ease",
+            transition: "transform 0.3s ease"
           }
         }}
       >
@@ -94,12 +86,12 @@ export function WidgetLauncher({ config, onClick, unreadCount = 0 }) {
               animation: hasUnread ? "pulse 2s infinite" : "none",
               "@keyframes pulse": {
                 "0%, 100%": {
-                  transform: "scale(1)",
+                  transform: "scale(1)"
                 },
                 "50%": {
-                  transform: "scale(1.1)",
-                },
-              },
+                  transform: "scale(1.1)"
+                }
+              }
             }}
           >
             {unreadCount > 99 ? "99+" : unreadCount}

@@ -1,83 +1,55 @@
-import { useEffect, useState } from "react"
-import { getConfigKey, getChatDataKey, getMessagesKey, getStarterKey } from '@/lib/constants'
+'use client'
 
+import { useState, useCallback } from 'react'
+import { storage, Keys } from '@/lib/constants'
+import { useWidgetConfig } from './useWidgetConfig'
 
-const DEFAULT_BOT_MESSAGE = { sender: "poshtibot", message: "سلام، چطور می‌تونم کمکتون کنم؟" }
+const DEFAULT_BOT_MESSAGE = {
+  sender: 'poshtibot',
+  message: 'سلام، چطور می‌تونم کمکتون کنم؟',
+  id: 'default-welcome'
+}
+
+function loadMessages(cid) {
+  const saved = storage.getJSON(Keys.messages(cid))
+  return Array.isArray(saved) && saved.length > 0 ? saved : [DEFAULT_BOT_MESSAGE]
+}
+
+function loadChatData(cid) {
+  return storage.getJSON(Keys.chatData(cid)) ?? null
+}
 
 export function usePoshtibotSetup(chatbotId) {
-    const [config, setConfig] = useState(null)
-    const [chatId, setChatId] = useState(null)
-    const [userId, setUserId] = useState(null)
-    const [allMessages, setAllMessages] = useState([DEFAULT_BOT_MESSAGE])
-    const [starterMessages, setStarterMessages] = useState(null)
+  const { config, loading, starterMessages } = useWidgetConfig(chatbotId)
+  const [allMessages, setAllMessages] = useState(() =>
+    chatbotId ? loadMessages(chatbotId) : [DEFAULT_BOT_MESSAGE]
+  )
 
-    useEffect(() => {
-        if (!chatbotId) return
+  const chatData = chatbotId ? loadChatData(chatbotId) : null
+  const chatId = chatData?.poshtibot_chat_id ?? null
+  const userId = chatData?.poshtibot_user_id ?? null
 
-        let intervalId = null
-
-        const loadFromLocalStorage = () => {
-            try {
-                const configKey = getConfigKey(chatbotId)
-                const chatDataKey = getChatDataKey(chatbotId)
-                const messagesKey = getMessagesKey(chatbotId)
-                const starterKey = getStarterKey(chatbotId)
-
-                const chatData = JSON.parse(localStorage.getItem(chatDataKey) || '{}')
-                const pwc = JSON.parse(localStorage.getItem(configKey) || '{}')
-                const savedMessages = JSON.parse(localStorage.getItem(messagesKey) || '[]')
-                const starter = JSON.parse(localStorage.getItem(starterKey) || '[]')
-
-                if (pwc && Object.keys(pwc).length > 0) {
-                    setConfig(pwc)
-                    setChatId(chatData.poshtibot_chat_id)
-                    setUserId(chatData.poshtibot_user_id)
-                    setAllMessages(savedMessages?.length > 0 ? savedMessages : [DEFAULT_BOT_MESSAGE])
-                    setStarterMessages(starter)
-                    return true
-                }
-            } catch (err) {
-                console.error("Error loading chat data:", err)
-                setAllMessages([DEFAULT_BOT_MESSAGE])
-            }
-            return false
+  const persistMessages = useCallback(
+    (updater) => {
+      setAllMessages((prev) => {
+        const next = typeof updater === 'function' ? updater(prev) : updater
+        if (chatbotId) {
+          storage.setJSON(Keys.messages(chatbotId), next)
         }
+        return next
+      })
+    },
+    [chatbotId]
+  )
 
-        // 1️. Try immediately
-        const loaded = loadFromLocalStorage()
-
-        // const loaded = setTimeout(() => {
-        //     loadFromLocalStorage()
-        // }, 500)
-
-        // 2️. If not found, poll for a short time (e.g., up to 5s)
-        if (!loaded) {
-            let tries = 0
-            intervalId = setInterval(() => {
-                if (loadFromLocalStorage() || tries > 10) {
-                    clearInterval(intervalId)
-                }
-                tries++
-            }, 500)
-        }
-
-        // 3️. Listen for postMessage updates from parent
-        // const handleMessage = (event) => {
-        //     if (event.data?.type === "POSHTIBOT_CONFIG" && event.data.data) {
-        //         const data = event.data
-        //         setConfig(data)
-        //         localStorage.setItem("poshtibot-widget-config", JSON.stringify(data))
-        //         // Optional: reload other data when config arrives
-        //         loadFromLocalStorage()
-        //     }
-        // }
-
-        // window.addEventListener("message", handleMessage)
-
-        return () => {
-            if (intervalId) clearInterval(intervalId)
-        }
-    }, [chatbotId])
-
-    return { config, chatbotId, chatId, userId, allMessages, setAllMessages, starterMessages }
+  return {
+    config,
+    loading,
+    chatbotId,
+    chatId,
+    userId,
+    allMessages,
+    setAllMessages: persistMessages,
+    starterMessages
+  }
 }

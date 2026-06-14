@@ -1,46 +1,23 @@
-"use client"
+'use client'
 
-import { useEffect, useState, useCallback } from "react"
-import { Box } from "@mui/material"
-import { AnimatePresence } from "framer-motion"
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { Box } from '@mui/material'
+import { AnimatePresence } from 'framer-motion'
 import { v4 as uuidv4 } from 'uuid'
 
-// Import hooks and components
-import { useWidgetConfig } from "@/hooks/useWidgetConfig"
-import { WidgetLauncher } from "@/components/WidgetLauncher"
-import { getChatDataKey } from "@/lib/constants"
-import { useChat } from "@/hooks/useChat"
-import ChatWidget from "./ChatWidget"
-
-// For easier switching between dev and prod
-// const WIDGET_URL = process.env.NODE_ENV === 'production'
-//   ? 'https://widget.poshtibot.com/chat'
-//   : 'http://localhost:3000/chat'
+import { useWidgetConfig } from '@/hooks/useWidgetConfig'
+import { useChat } from '@/hooks/useChat'
+import { WidgetLauncher } from '@/components/WidgetLauncher'
+import ChatWidget from './ChatWidget'
+import { storage, Keys } from '@/lib/constants'
 
 export default function WidgetRoot({ chatbotId }) {
   const [open, setOpen] = useState(false)
-  const { config } = useWidgetConfig(chatbotId) // Custom hook handles all config logic
+  const { config } = useWidgetConfig(chatbotId)
+  const initializedRef = useRef(false)
 
-  // Get chat data from localStorage
-  const [chatData, setChatData] = useState(null)
+  const chatData = chatbotId ? storage.getJSON(Keys.chatData(chatbotId)) : null
 
-  useEffect(() => {
-    if (!chatbotId) return
-
-    const chatDataKey = getChatDataKey(chatbotId)
-    const data = JSON.parse(localStorage.getItem(chatDataKey) || 'null')
-    setChatData(data)
-
-    // Listen for storage changes (in case chat data is updated elsewhere)
-    const handleStorageChange = () => {
-      const updated = JSON.parse(localStorage.getItem(chatDataKey) || 'null')
-      setChatData(updated)
-    }
-    window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
-  }, [chatbotId])
-
-  // Use the useChat hook to maintain socket connection and track unread messages
   const { unreadCount } = useChat({
     chatbotId,
     userId: chatData?.poshtibot_user_id,
@@ -48,133 +25,75 @@ export default function WidgetRoot({ chatbotId }) {
     isOpen: open
   })
 
-  // Effect for initializing chat/user IDs
   useEffect(() => {
-    if (!config.user_flows_data || !chatbotId) return
+    if (!chatbotId || !config?.user_flows_data || initializedRef.current) return
+    if (storage.getJSON(Keys.chatData(chatbotId))) return
 
-    const chatDataKey = getChatDataKey(chatbotId)
-    if (localStorage.getItem(chatDataKey)) return
+    initializedRef.current = true
 
-    const chat_id = uuidv4()
-    const user_id = uuidv4()
     const newChatData = {
-      poshtibot_chat_id: chat_id,
-      poshtibot_user_id: user_id,
-      agent_status: "none"
+      poshtibot_chat_id: uuidv4(),
+      poshtibot_user_id: uuidv4(),
+      agent_status: 'none'
     }
-    localStorage.setItem(chatDataKey, JSON.stringify(newChatData))
-    setChatData(newChatData)
+    storage.setJSON(Keys.chatData(chatbotId), newChatData)
 
-    const data = {
-      user_flows_data: config.user_flows_data,
-      chat_id
-    }
-
-    const create_chat = async () => {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/add_new_chat_on_widget_lunch`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/add_new_chat_on_widget_lunch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_flows_data: config.user_flows_data,
+        chat_id: newChatData.poshtibot_chat_id
       })
-        .then(response => response.json())
-        .then(data => {
-          console.log(data)
-        })
-        .catch(err => console.log(err))
-    }
+    }).catch(() => {})
+  }, [chatbotId, config])
 
-    create_chat()
-  }, [config, chatbotId])
-
-  // Effect for listening to close messages from the iframe
   useEffect(() => {
     const handleMessage = (event) => {
-      if (
-        event.data?.type === "CLOSE_CHAT_WIDGET" ||
-        event.data?.type === "OUTSIDE_CLICK"
-      ) {
+      if (event.data?.type === 'CLOSE_CHAT_WIDGET' || event.data?.type === 'OUTSIDE_CLICK') {
         setOpen(false)
-
-        window.parent.postMessage(
-          {
-            type: "CLOSE_WIDGET"
-          },
-          "*"
-        )
+        window.parent.postMessage({ type: 'CLOSE_WIDGET' }, '*')
       }
     }
-    window.addEventListener("message", handleMessage)
-    return () => window.removeEventListener("message", handleMessage)
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
   }, [])
 
-  useEffect(() => {
-    const sendMessage = () => {
-      window.parent.postMessage(
-        {
-          type: "POSITION",
-          position: config?.widget_position
-        },
-        "*"
-      )
-
-    }
-    window.addEventListener("message", sendMessage)
-    return () => window.removeEventListener("message", sendMessage)
-  }, [])
-
-  // Memoize the toggle function
   const toggleWidget = useCallback(() => {
-
-    setOpen(prev => {
-
+    setOpen((prev) => {
       const next = !prev
-
-      window.parent.postMessage(
-        {
-          type: next
-            ? "OPEN_WIDGET"
-            : "CLOSE_WIDGET"
-        },
-        "*"
-      )
-
+      window.parent.postMessage({ type: next ? 'OPEN_WIDGET' : 'CLOSE_WIDGET' }, '*')
       return next
     })
-
   }, [])
-
 
   return (
     <>
       <AnimatePresence>
-        {!open && <WidgetLauncher config={config} onClick={toggleWidget} unreadCount={unreadCount} />}
+        {!open && (
+          <WidgetLauncher config={config} onClick={toggleWidget} unreadCount={unreadCount} />
+        )}
       </AnimatePresence>
 
       <Box
         sx={{
-          position: "fixed",
+          position: 'fixed',
           bottom: 40,
-          [config?.widget_position || "right"]: 40,
+          [config?.widget_position || 'right']: 40,
           width: 380,
           height: 600,
           borderRadius: 7,
           boxShadow: 'rgba(0, 0, 0, 0.2) 0px 5px 10px 0px',
           transformOrigin: config?.widget_position === 'left' ? 'bottom left' : 'bottom right',
-          transition: "all 0.3s ease-in-out",
-          // Animate with opacity and scale for better performance
+          transition: 'all 0.3s ease-in-out',
           opacity: open ? 1 : 0,
-          transform: open ? "scale(1)" : "scale(0)",
+          transform: open ? 'scale(1)' : 'scale(0)',
           visibility: open ? 'visible' : 'hidden',
           zIndex: 9998,
-          background: "#fff",
+          background: '#fff'
         }}
       >
-        {/* Conditionally render iframe only when opening to save resources */}
-        {open && (
-          <ChatWidget chatbotId={chatbotId} setOpen={setOpen} />
-        )}
+        {open && <ChatWidget chatbotId={chatbotId} setOpen={setOpen} />}
       </Box>
     </>
   )

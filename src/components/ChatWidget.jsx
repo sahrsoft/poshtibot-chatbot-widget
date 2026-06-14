@@ -1,200 +1,173 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback, useMemo } from "react"
-import { Box } from "@mui/material"
-import { useChat } from "@/hooks/useChat"
-import { usePoshtibotSetup } from "../hooks/usePoshtibotSetup"
-import ChatHeader from "./ChatHeader"
-import MessageList from "./MessageList"
-import ChatStarters from "./ChatStarters"
-import AgentButton from "./AgentButton"
-import ChatInput from "./ChatInput"
-import CollectLeads from "./CollectLeads"
-import { getChatDataKey, getMessagesKey } from "@/lib/constants"
-import PendingForAgent from "./PendingForAgent"
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
+import { Box } from '@mui/material'
+import { useChat } from '@/hooks/useChat'
+import { usePoshtibotSetup } from '@/hooks/usePoshtibotSetup'
+import ChatHeader from './ChatHeader'
+import MessageList from './MessageList'
+import ChatStarters from './ChatStarters'
+import AgentButton from './AgentButton'
+import ChatInput from './ChatInput'
+import CollectLeads from './CollectLeads'
+import PendingForAgent from './PendingForAgent'
+import { storage, Keys } from '@/lib/constants'
 
 const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
-  const [notifications, setNotifications] = useState(true)
-  const [showInitMsg, setShowInitMsg] = useState(true)
-  const [leadsStatus, setLeadsStatus] = useState()
-
   const chatEndRef = useRef(null)
 
-  // Get chatbotId from prop or URL params
-  const [chatbotId, setChatbotId] = useState(() => {
-    if (propChatbotId) return propChatbotId
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search)
-      return params.get('chatbot_id')
+  const chatbotId = propChatbotId
+
+  const { config, loading, chatId, userId, allMessages, setAllMessages, starterMessages } =
+    usePoshtibotSetup(chatbotId)
+
+  const persistedChatData = useMemo(
+    () => (chatbotId ? storage.getJSON(Keys.chatData(chatbotId)) ?? {} : {}),
+    [chatbotId]
+  )
+
+  const {
+    sendUserMessage,
+    messages,
+    isTyping,
+    agentStatus,
+    setAgentStatus,
+    cancelRequestForAgent,
+    agentName,
+    setAgentName,
+    emitTyping,
+    emitStopTyping
+  } = useChat({ chatbotId, userId, chatId })
+
+  const [showInitMsg, setShowInitMsg] = useState(true)
+
+  const needsLeads = Boolean(
+    config &&
+      (config?.leads_from_name || config?.leads_from_email || config?.leads_from_mobile) &&
+      !persistedChatData.leads_collected
+  )
+
+  const initRef = useRef(false)
+  useEffect(() => {
+    if (!chatbotId || !config || initRef.current) return
+    initRef.current = true
+
+    if (persistedChatData?.agent_status === 'pending') setAgentStatus('pending')
+    if (persistedChatData?.agent_status === 'joined') {
+      setAgentStatus('joined')
+      setAgentName(persistedChatData?.agent_name)
     }
-    return null
-  })
-
-  const { config, chatbotId: configChatbotId, chatId, userId, allMessages, setAllMessages, starterMessages } = usePoshtibotSetup(chatbotId)
-
-  // Use chatbotId from prop/URL, fallback to config if needed
-  const activeChatbotId = chatbotId || configChatbotId
-
-  const { sendUserMessage, messages, isTyping, agentStatus, setAgentStatus, cancelRequestForAgent, agentName, setAgentName, emitTyping, emitStopTyping } = useChat({ chatbotId: activeChatbotId, userId, chatId })
-
-  // Memoize the chat starters array to prevent re-renders
-  const chatStarters = useMemo(() => starterMessages, [starterMessages])
+  }, [config, chatbotId, persistedChatData, setAgentStatus, setAgentName])
 
   useEffect(() => {
-    if (!messages?.length || !activeChatbotId) return
-    setAllMessages(prev => {
-      const seen = new Set(prev.map(m => m.id))
-      const newOnes = messages.filter(m => !seen.has(m.id))
-      if (newOnes.length === 0) return prev
-      const merged = [...prev, ...newOnes]
-      const messagesKey = getMessagesKey(activeChatbotId)
-      localStorage.setItem(messagesKey, JSON.stringify(merged))
+    if (!messages?.length || !chatbotId) return
+    setAllMessages((prev) => {
+      const existing = new Map(prev.map((m) => [m.id, m]))
+      let changed = false
+      for (const msg of messages) {
+        if (!existing.has(msg.id)) {
+          existing.set(msg.id, msg)
+          changed = true
+        }
+      }
+      if (!changed) return prev
+      const merged = [...existing.values()]
+      storage.setJSON(Keys.messages(chatbotId), merged)
       return merged
     })
-  }, [messages, setAllMessages, activeChatbotId])
+  }, [messages, setAllMessages, chatbotId])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [allMessages, isTyping])
 
-  useEffect(() => {
-    if (!activeChatbotId || !config) return
-    const chatDataKey = getChatDataKey(activeChatbotId)
-    const chatData = JSON.parse(localStorage.getItem(chatDataKey) || '{}')
-    if ((config?.leads_from_name || config?.leads_from_email || config?.leads_from_mobile) &&
-      (!chatData.leads_collected)) {
-      setLeadsStatus(true)
-    }
+  const handleSendMessage = useCallback(
+    (messageText) => {
+      if (!messageText?.trim() || !chatbotId) return
+      const newMsg = { sender: 'user', message: messageText, id: Date.now() + '-' + Math.random().toString(36).slice(2, 8) }
+      setAllMessages((prev) => {
+        const next = [...prev, newMsg]
+        storage.setJSON(Keys.messages(chatbotId), next)
+        return next
+      })
+      setShowInitMsg(false)
+      sendUserMessage(config?.user_flows_data, chatId, messageText)
+    },
+    [chatbotId, chatId, config?.user_flows_data, sendUserMessage, setAllMessages]
+  )
 
-    if (chatData?.agent_status === "pending") {
-      setAgentStatus("pending")
-    }
-    if (chatData?.agent_status === "joined") {
-      setAgentStatus("joined")
-      setAgentName(chatData?.agent_name)
-    }
-  }, [config, activeChatbotId, setAgentStatus, setAgentName])
-
-
-  // Memoized callback for sending a message
-  const handleSendMessage = useCallback((messageText) => {
-    console.log("messageText", messageText)
-    if (!messageText || !activeChatbotId) return
-    const newMsg = { sender: "user", message: messageText, id: Date.now() }
-    setAllMessages(prev => {
-      const updated = [...prev, newMsg]
-      const messagesKey = getMessagesKey(activeChatbotId)
-      localStorage.setItem(messagesKey, JSON.stringify(updated))
-      return updated
-    })
-    setShowInitMsg(false) // Hide starters after first message
-    sendUserMessage(config.user_flows_data, chatId, messageText)
-  }, [chatId, config, sendUserMessage, setAllMessages, activeChatbotId])
-
-  // Memoized callback for clicking a starter prompt
-  const handleStarterClick = useCallback((starterText) => {
-    handleSendMessage(starterText)
-  }, [handleSendMessage])
-
-  const toggleNotifications = useCallback(() => setNotifications(prev => !prev), [])
+  const handleStarterClick = useCallback(
+    (text) => handleSendMessage(text),
+    [handleSendMessage]
+  )
 
   const handleCloseChat = useCallback(() => {
     setOpen(false)
-    window.parent.postMessage({ type: "CLOSE_CHAT_WIDGET" }, "*")
-  }, [])
+    window.parent.postMessage({ type: 'CLOSE_CHAT_WIDGET' }, '*')
+  }, [setOpen])
 
-  // Memoize the calculation for showing the support button
   const isAgentButtonVisible = useMemo(() => {
-    const userMessageCount = allMessages.filter(msg => msg.sender === "user").length
-    return config?.agent_handoff === 1 && userMessageCount > 0 && userMessageCount % 4 === 0
+    const userCount = allMessages.filter((m) => m.sender === 'user').length
+    return config?.agent_handoff === 1 && userCount > 0 && userCount % 4 === 0
   }, [allMessages, config])
 
   const handleCancelRequest = useCallback(() => {
-    if (!activeChatbotId) return
+    if (!chatbotId) return
     cancelRequestForAgent(chatId)
-    const chatDataKey = getChatDataKey(activeChatbotId)
-    const chatData = JSON.parse(localStorage.getItem(chatDataKey) || 'null')
+    const chatData = storage.getJSON(Keys.chatData(chatbotId))
     if (chatData) {
-      const updated = {
-        ...chatData,
-        agent_status: "none"
-      }
-      localStorage.setItem(chatDataKey, JSON.stringify(updated))
+      storage.setJSON(Keys.chatData(chatbotId), { ...chatData, agent_status: 'none' })
     }
-  }, [cancelRequestForAgent, chatId, activeChatbotId])
+  }, [cancelRequestForAgent, chatId, chatbotId])
 
-
-  if (!config) {
-    return <Box sx={{ p: 4, textAlign: "center" }}>در حال بارگذاری...</Box>
+  if (loading || !config) {
+    return <Box sx={{ p: 4, textAlign: 'center' }}>در حال بارگذاری...</Box>
   }
 
   return (
-    <Box
-      sx={{
-        borderRadius: 7,
-        overflow: 'auto'
-      }}
-    >
-      <Box
-        sx={{
-          height: '600px',
-          display: 'flex',
-          flexDirection: 'column',
-          backgroundImage: 'linear-gradient(0deg, rgba(0,0,0,0.5), rgba(0,0,0,0.8)),url(./images/widgetBg1.jpg)',
-          backgroundSize: 'cover'
-        }}
-      >
-        <ChatHeader
-          notifications={notifications}
-          onToggleNotifications={toggleNotifications}
-          onCloseChat={handleCloseChat}
-          agentStatus={agentStatus}
-          agentName={agentName}
-        />
+    <Box sx={{ height: '600px', display: 'flex', flexDirection: 'column', borderRadius: 7, overflow: 'hidden', backgroundImage: 'linear-gradient(0deg, rgba(0,0,0,0.5), rgba(0,0,0,0.8)),url(./images/widgetBg1.jpg)', backgroundSize: 'cover' }}>
+      <ChatHeader
+        notifications
+        onToggleNotifications={() => {}}
+        onCloseChat={handleCloseChat}
+        agentStatus={agentStatus}
+        agentName={agentName}
+      />
 
-        {leadsStatus ? (
-          <CollectLeads config={config} chatbotId={activeChatbotId} />
-        ) : (
-          <>
-            <MessageList
-              allMessages={allMessages}
-              isTyping={isTyping}
-              chatEndRef={chatEndRef}
+      {needsLeads ? (
+        <CollectLeads config={config} chatbotId={chatbotId} />
+      ) : (
+        <>
+          <MessageList allMessages={allMessages} isTyping={isTyping} chatEndRef={chatEndRef} />
+
+          {agentStatus === 'none' && (
+            <AgentButton
+              chatbotId={chatbotId}
+              isVisible={isAgentButtonVisible}
+              userId={userId}
+              chatId={chatId}
+              userFlowsData={config?.user_flows_data}
             />
+          )}
 
-            {agentStatus === "none" &&
-              <AgentButton chatbotId={activeChatbotId} isVisible={isAgentButtonVisible} userId={userId} chatId={chatId} userFlowsData={config.user_flows_data} />
-            }
+          <Box sx={{ px: 0.5, borderTop: '1px solid #e3eded', bgcolor: '#fff' }}>
+            {showInitMsg && agentStatus === 'none' && (
+              <ChatStarters starters={starterMessages} onStarterClick={handleStarterClick} />
+            )}
 
-            <Box
-              sx={{
-                px: .5,
-                borderTop: '1px solid #e3eded',
-                bgcolor: '#fff'
-              }}
-            >
-              {showInitMsg && (agentStatus === "none") && (
-                <ChatStarters
-                  starters={chatStarters}
-                  onStarterClick={handleStarterClick}
-                />
-              )}
-
-              {agentStatus === "pending" ? (
-                <PendingForAgent handleCancelRequest={handleCancelRequest} />
-              ) : (
-                <ChatInput
-                  isTyping={isTyping}
-                  onSendMessage={handleSendMessage}
-                  onTyping={emitTyping}
-                  onStopTyping={emitStopTyping}
-                />
-              )}
-
-            </Box>
-          </>
-        )}
-      </Box>
+            {agentStatus === 'pending' ? (
+              <PendingForAgent handleCancelRequest={handleCancelRequest} />
+            ) : (
+              <ChatInput
+                isTyping={isTyping}
+                onSendMessage={handleSendMessage}
+                onTyping={emitTyping}
+                onStopTyping={emitStopTyping}
+              />
+            )}
+          </Box>
+        </>
+      )}
     </Box>
   )
 }

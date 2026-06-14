@@ -1,3 +1,5 @@
+'use client'
+
 import { Icon } from "@iconify/react"
 import { Box, Button, Typography } from "@mui/material"
 import threeDotsFade from '@iconify-icons/svg-spinners/3-dots-fade'
