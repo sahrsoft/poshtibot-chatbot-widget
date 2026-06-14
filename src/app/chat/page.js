@@ -1,11 +1,13 @@
-import ChatWidget from "@/components/ChatWidget"
+import ChatWidgetFallback from '@/components/ChatWidgetFallback'
 
 const page = async ({ searchParams }) => {
-    const { chatbot_id } = await searchParams
+  const { chatbot_id } = await searchParams
 
-    return (
-        <ChatWidget chatbotId={chatbot_id} />
-    )
+  if (!chatbot_id) {
+    return <div>Chatbot ID is required</div>
+  }
+
+  return <ChatWidgetFallback chatbotId={chatbot_id} />
 }
 
 export default page

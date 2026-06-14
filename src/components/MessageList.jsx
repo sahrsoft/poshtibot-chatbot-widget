@@ -25,7 +25,8 @@ const Message = memo(({ msg }) => (
         background: msg.sender === 'user' ? '#a3f5c4' : '#f5f9f9',
         fontSize: 15,
         color: 'black',
-        wordBreak: 'break-word'
+        wordBreak: 'break-word',
+        textAlign: 'justify'
       }}
     >
       {msg.message}

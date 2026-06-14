@@ -12,6 +12,7 @@ const ChatInput = ({ isTyping, onSendMessage, onTyping, onStopTyping }) => {
   const [anchorEl, setAnchorEl] = useState(null)
   const typingTimer = useRef(null)
   const isTypingEmitted = useRef(false)
+  const inputRef = useRef(null)
 
   useEffect(() => {
     return () => {
@@ -19,6 +20,12 @@ const ChatInput = ({ isTyping, onSendMessage, onTyping, onStopTyping }) => {
       if (isTypingEmitted.current && onStopTyping) onStopTyping()
     }
   }, [onStopTyping])
+
+  useEffect(() => {
+    if (!isTyping && inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [isTyping])
 
   const emitTypingStart = useCallback(() => {
     if (!isTypingEmitted.current && onTyping) {
@@ -87,11 +94,7 @@ const ChatInput = ({ isTyping, onSendMessage, onTyping, onStopTyping }) => {
 
   return (
     <Box sx={{ px: 1, py: 1, bgcolor: '#fff' }}>
-      <Box
-        component='form'
-        onSubmit={handleSubmit}
-        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-      >
+      <Box component='form' onSubmit={handleSubmit} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <IconButton
           onClick={(e) => setAnchorEl(e.currentTarget)}
           sx={{
@@ -104,6 +107,8 @@ const ChatInput = ({ isTyping, onSendMessage, onTyping, onStopTyping }) => {
         </IconButton>
 
         <TextField
+          inputRef={inputRef}
+          autoFocus
           disabled={isTyping}
           size='small'
           variant='outlined'
@@ -132,18 +137,11 @@ const ChatInput = ({ isTyping, onSendMessage, onTyping, onStopTyping }) => {
         />
 
         <IconButton type='submit' sx={{ p: 0.5 }} disabled={!input.trim()}>
-          <Icon
-            icon={telegram}
-            fontSize={32}
-            style={{ color: input.trim() ? 'rgb(0, 210, 133)' : '#c0c0c0' }}
-          />
+          <Icon icon={telegram} fontSize={32} style={{ color: input.trim() ? 'rgb(0, 210, 133)' : '#c0c0c0' }} />
         </IconButton>
       </Box>
 
-      <Typography
-        textAlign='center'
-        sx={{ color: '#577e7d', fontSize: 12, pt: 1 }}
-      >
+      <Typography textAlign='center' sx={{ color: '#577e7d', fontSize: 12, pt: 1 }}>
         قدرت گرفته از پشتیبات 💚
       </Typography>
 

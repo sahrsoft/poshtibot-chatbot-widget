@@ -1,4 +1,4 @@
-import WidgetRoot from "@/components/WidgetRoot"
+import WidgetRootWrapper from '@/components/WidgetRootWrapper'
 
 const page = async ({ searchParams }) => {
   const { chatbot_id } = await searchParams
@@ -7,7 +7,7 @@ const page = async ({ searchParams }) => {
     return <div>Chatbot ID is required</div>
   }
 
-  return <WidgetRoot chatbotId={chatbot_id} />
+  return <WidgetRootWrapper chatbotId={chatbot_id} />
 }
 
 export default page

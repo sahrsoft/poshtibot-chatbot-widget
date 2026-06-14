@@ -53,7 +53,7 @@ export function WidgetLauncher({ config, onClick, unreadCount = 0 }) {
         <Image
           src={
             config?.logo_url
-              ? process.env.NEXT_PUBLIC_SERVER_URL + config.logo_url
+              ? process.env.NEXT_PUBLIC_SERVER_URL + config.logo_url.trim()
               : "/images/white-icon.png"
           }
           width={25}
