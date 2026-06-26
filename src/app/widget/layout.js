@@ -3,5 +3,17 @@ export const metadata = {
 }
 
 export default function WidgetLayout({ children }) {
-  return children
+  return (
+    <>
+      <style>{`
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          background: transparent !important;
+          overflow: hidden !important;
+        }
+      `}</style>
+      {children}
+    </>
+  )
 }

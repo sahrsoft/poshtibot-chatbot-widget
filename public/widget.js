@@ -17,25 +17,27 @@
       position = data.message.widget_config.widget_position || 'right'
     }
   } catch {
-    // use default
+    // fallback
   }
 
   const iframe = document.createElement('iframe')
   iframe.src = `https://widget.poshtibot.com/widget?chatbot_id=${chatbotId}`
   iframe.id = 'poshtibot-widget-frame'
+  iframe.title = 'Poshtibot Chat'
+  iframe.allow = 'microphone; camera'
   iframe.style.cssText = `
     position: fixed;
     bottom: 24px;
     ${position}: 24px;
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
     border: none;
     background: transparent;
     z-index: 999999;
-    overflow: hidden;
-    transition: width 0.25s ease, height 0.25s ease;
     max-width: calc(100vw - 20px);
     max-height: calc(100vh - 20px);
+    transition: width 0.25s ease, height 0.25s ease, border-radius 0.25s ease;
+    border-radius: 50px;
   `
   document.body.appendChild(iframe)
 
@@ -43,22 +45,24 @@
     if (!event.data?.type) return
 
     if (event.data.type === 'OPEN_WIDGET') {
+      iframe.style.borderRadius = '0'
       if (window.innerWidth < 640) {
         iframe.style.width = '100vw'
         iframe.style.height = '100vh'
         iframe.style.bottom = '0'
         iframe.style[position] = '0'
       } else {
-        iframe.style.width = '380px'
-        iframe.style.height = '700px'
+        iframe.style.width = '420px'
+        iframe.style.height = '660px'
       }
     }
 
     if (event.data.type === 'CLOSE_WIDGET') {
-      iframe.style.width = '80px'
-      iframe.style.height = '80px'
+      iframe.style.width = '100px'
+      iframe.style.height = '100px'
       iframe.style.bottom = '24px'
       iframe.style[position] = '24px'
+      iframe.style.borderRadius = '50px'
     }
   })
 
