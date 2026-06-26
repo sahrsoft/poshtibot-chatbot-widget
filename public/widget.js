@@ -1,98 +1,69 @@
-(async () => {
+;(async () => {
   const script = document.currentScript
-  const chatbotId = script.getAttribute("data-chatbot-id")
+  const chatbotId = script.getAttribute('data-chatbot-id')
 
   if (!chatbotId) {
-    console.error("Poshtibot: chatbot-id is missing")
+    console.error('Poshtibot: chatbot-id is missing')
     return
   }
 
-  let position = "right"
-  const apiUrl = `https://server.poshtibot.com/api/method/poshtibot.api.get_widget_config?chatbot_id=${chatbotId}`
-  const response = await fetch(apiUrl)
-  if (!response.ok) {
-    position = "right"
+  let position = 'right'
+  try {
+    const res = await fetch(
+      `https://server.poshtibot.com/api/method/poshtibot.api.get_widget_config?chatbot_id=${chatbotId}`
+    )
+    if (res.ok) {
+      const data = await res.json()
+      position = data.message.widget_config.widget_position || 'right'
+    }
+  } catch {
+    // use default
   }
-  const data = await response.json()
-  position = data.message.widget_config.widget_position
 
-  // -----------------------------------
-  // CREATE IFRAME
-  // -----------------------------------
-
-  const iframe = document.createElement("iframe")
+  const iframe = document.createElement('iframe')
   iframe.src = `https://widget.poshtibot.com/widget?chatbot_id=${chatbotId}`
+  iframe.id = 'poshtibot-widget-frame'
   iframe.style.cssText = `
     position: fixed;
-    bottom: 0;
-    ${position}: 0;
-    width: 100%;
-    height: 100%;
+    bottom: 24px;
+    ${position}: 24px;
+    width: 80px;
+    height: 80px;
     border: none;
-    z-index: 9999;
+    background: transparent;
+    z-index: 999999;
+    overflow: hidden;
+    transition: width 0.25s ease, height 0.25s ease;
+    max-width: calc(100vw - 20px);
+    max-height: calc(100vh - 20px);
   `
   document.body.appendChild(iframe)
 
-
-  // -----------------------------------
-  // LISTEN FOR OPEN/CLOSE EVENTS
-  // -----------------------------------
-
-  window.addEventListener("message", (event) => {
-
+  window.addEventListener('message', (event) => {
     if (!event.data?.type) return
 
-    // OPEN
-    if (event.data.type === "OPEN_WIDGET") {
-
+    if (event.data.type === 'OPEN_WIDGET') {
       if (window.innerWidth < 640) {
-
-        iframe.style.width = "100vw"
-        iframe.style.height = "100vh"
-
-        iframe.style.bottom = "0"
-        iframe.style.right = "0"
-
+        iframe.style.width = '100vw'
+        iframe.style.height = '100vh'
+        iframe.style.bottom = '0'
+        iframe.style[position] = '0'
       } else {
-
-        iframe.style.width = "430px"
-        iframe.style.height = "640px"
-        iframe.style.borderRadius = "28px"
-        // iframe.style.bottom = "40px"
-
-        // if (position === "right") {
-        //   iframe.style.right = "40px"
-        // } else {
-        //   iframe.style.left = "40px"
-        // }
-
-        // setTimeout(() => {
-        //   iframe.style.boxShadow = "0 12px 28px 0 hsla(0,0%,0%,.2), 0 2px 4px 0 hsla(0,0%,0%,.1)"
-        // }, 300)
-
+        iframe.style.width = '380px'
+        iframe.style.height = '700px'
       }
     }
 
-    // CLOSE
-    if (event.data.type === "CLOSE_WIDGET") {
-
-      iframe.style.width = "auto"
-      iframe.style.height = "auto"
-
-      // iframe.style.right = "0"
-      // iframe.style.bottom = "0"
-      iframe.style.boxShadow = "none"
+    if (event.data.type === 'CLOSE_WIDGET') {
+      iframe.style.width = '80px'
+      iframe.style.height = '80px'
+      iframe.style.bottom = '24px'
+      iframe.style[position] = '24px'
     }
   })
 
-  // -----------------------------------
-  // OUTSIDE CLICK
-  // -----------------------------------
-
-  document.addEventListener("mousedown", (event) => {
-
+  document.addEventListener('mousedown', (event) => {
     const rect = iframe.getBoundingClientRect()
-
     const clickedInside =
       event.clientX >= rect.left &&
       event.clientX <= rect.right &&
@@ -100,14 +71,7 @@
       event.clientY <= rect.bottom
 
     if (!clickedInside) {
-
-      iframe.contentWindow.postMessage(
-        {
-          type: "OUTSIDE_CLICK"
-        },
-        "*"
-      )
+      iframe.contentWindow.postMessage({ type: 'OUTSIDE_CLICK' }, '*')
     }
   })
-
 })()
