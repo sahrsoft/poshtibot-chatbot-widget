@@ -84,7 +84,7 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
   const handleSendMessage = useCallback(
     (messageText) => {
       if (!messageText?.trim() || !chatbotId) return
-      const newMsg = { sender: 'user', message: messageText, id: Date.now() + '-' + Math.random().toString(36).slice(2, 8) }
+      const newMsg = { sender: 'user', message: messageText, id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}` }
       setAllMessages((prev) => {
         const next = [...prev, newMsg]
         storage.setJSON(Keys.messages(chatbotId), next)
