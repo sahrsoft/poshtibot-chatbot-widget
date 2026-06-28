@@ -23,7 +23,6 @@ RUN npm run build
 
 FROM node:20-alpine AS runner
 
-ENV NODE_ENV=production
 ENV PORT=3000
 
 WORKDIR /app
