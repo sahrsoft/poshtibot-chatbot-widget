@@ -9,7 +9,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'chat_id is required' }, { status: 400 })
     }
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_SERVER_URL}.collect_leads`, {
+    const res = await fetch(`${process.env.API_SERVER_URL}.collect_leads`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id, name, email, mobile })

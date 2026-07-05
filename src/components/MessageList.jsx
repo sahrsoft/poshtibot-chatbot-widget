@@ -35,7 +35,7 @@ const Message = memo(({ msg }) => (
 ))
 Message.displayName = 'Message'
 
-const MessageList = ({ allMessages, isTyping, chatEndRef }) => (
+const MessageList = ({ allMessages, isTyping, chatEndRef, agentStatus }) => (
   <Box
     sx={{
       flexGrow: 1,
@@ -55,13 +55,15 @@ const MessageList = ({ allMessages, isTyping, chatEndRef }) => (
       <Message key={msg.id} msg={msg} />
     ))}
 
-    {isTyping && (
-      <Box display='flex' justifyContent='flex-end'>
-        <Box sx={{ px: 2, pt: 1, mb: 3, borderRadius: 2, color: '#20403c', bgcolor: '#fff' }}>
-          <Icon icon={threeDotsFade} width='24' height='24' />
+    {isTyping &&
+      agentStatus !== 'joined' &&
+      ''(
+        <Box display='flex' justifyContent='flex-end'>
+          <Box sx={{ px: 2, pt: 1, mb: 3, borderRadius: 2, color: '#20403c', bgcolor: '#fff' }}>
+            <Icon icon={threeDotsFade} width='24' height='24' />
+          </Box>
         </Box>
-      </Box>
-    )}
+      )}
 
     <div ref={chatEndRef} />
   </Box>

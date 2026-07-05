@@ -24,9 +24,15 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true }) {
 
   const resetUnread = useCallback(() => setUnreadCount(0), [])
 
-  useEffect(() => { agentStatusRef.current = agentStatus }, [agentStatus])
-  useEffect(() => { isOpenRef.current = isOpen }, [isOpen])
-  useEffect(() => { chatbotIdRef.current = chatbotId }, [chatbotId])
+  useEffect(() => {
+    agentStatusRef.current = agentStatus
+  }, [agentStatus])
+  useEffect(() => {
+    isOpenRef.current = isOpen
+  }, [isOpen])
+  useEffect(() => {
+    chatbotIdRef.current = chatbotId
+  }, [chatbotId])
 
   useEffect(() => {
     if (!chatbotId || !userId || !chatId) return
@@ -79,10 +85,7 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true }) {
     }
 
     const onPoshtibotMessage = (message) => {
-      const text =
-        typeof message === 'string'
-          ? message
-          : message?.message ?? JSON.stringify(message)
+      const text = typeof message === 'string' ? message : (message?.message ?? JSON.stringify(message))
       appendMessage('poshtibot', text)
     }
 

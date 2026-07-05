@@ -10,7 +10,7 @@ export async function POST(request) {
     }
 
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_SERVER_URL}.add_new_chat_on_widget_lunch`,
+      `${process.env.API_SERVER_URL}.add_new_chat_on_widget_lunch`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

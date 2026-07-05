@@ -48,6 +48,7 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
   )
 
   const initRef = useRef(false)
+  const didInitialScrollRef = useRef(false)
   useEffect(() => {
     if (!chatbotId || !config || initRef.current) return
     initRef.current = true
@@ -78,7 +79,19 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
   }, [messages, setAllMessages, chatbotId])
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const behavior = didInitialScrollRef.current ? 'smooth' : 'auto'
+    const scrollToBottom = () => {
+      chatEndRef.current?.scrollIntoView({ behavior, block: 'end' })
+    }
+
+    const frameId = requestAnimationFrame(scrollToBottom)
+    const transitionId = setTimeout(scrollToBottom, 350)
+    didInitialScrollRef.current = true
+
+    return () => {
+      cancelAnimationFrame(frameId)
+      clearTimeout(transitionId)
+    }
   }, [allMessages, isTyping])
 
   const handleSendMessage = useCallback(
@@ -138,7 +151,7 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
         <CollectLeads config={config} chatbotId={chatbotId} />
       ) : (
         <>
-          <MessageList allMessages={allMessages} isTyping={isTyping} chatEndRef={chatEndRef} />
+          <MessageList allMessages={allMessages} isTyping={isTyping} chatEndRef={chatEndRef} agentStatus={agentStatus} />
 
           {agentStatus === 'none' && (
             <AgentButton

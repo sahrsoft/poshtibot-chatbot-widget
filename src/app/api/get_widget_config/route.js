@@ -9,7 +9,7 @@ export async function GET(request) {
       return NextResponse.json({ error: 'chatbot_id is required' }, { status: 400 })
     }
 
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_SERVER_URL}.get_widget_config?chatbot_id=${encodeURIComponent(chatbotId)}`
+    const apiUrl = `${process.env.API_SERVER_URL}.get_widget_config?chatbot_id=${encodeURIComponent(chatbotId)}`
     const response = await fetch(apiUrl)
 
     if (!response.ok) {
