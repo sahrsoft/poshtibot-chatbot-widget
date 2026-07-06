@@ -18,11 +18,10 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
 
   const chatbotId = propChatbotId
 
-  const { config, loading, chatId, userId, allMessages, setAllMessages, starterMessages } =
-    usePoshtibotSetup(chatbotId)
+  const { config, loading, chatId, userId, allMessages, setAllMessages, starterMessages } = usePoshtibotSetup(chatbotId)
 
   const persistedChatData = useMemo(
-    () => (chatbotId ? storage.getJSON(Keys.chatData(chatbotId)) ?? {} : {}),
+    () => (chatbotId ? (storage.getJSON(Keys.chatData(chatbotId)) ?? {}) : {}),
     [chatbotId]
   )
 
@@ -40,11 +39,111 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
   } = useChat({ chatbotId, userId, chatId })
 
   const [showInitMsg, setShowInitMsg] = useState(true)
+  const [resolvedChatId, setResolvedChatId] = useState(chatId)
+  const loadedHistoryRef = useRef(new Set())
+
+  const extractMessagesFromPayload = useCallback((payload) => {
+    const collected = []
+    const makeId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+    const getTextValue = (value) => {
+      if (typeof value === 'string') return value.trim()
+      if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+      if (value && typeof value === 'object') {
+        if (typeof value.text === 'string') return value.text.trim()
+        if (typeof value.message === 'string') return value.message.trim()
+        if (typeof value.content === 'string') return value.content.trim()
+        if (typeof value.body === 'string') return value.body.trim()
+        if (typeof value.answer === 'string') return value.answer.trim()
+      }
+      return ''
+    }
+
+    const groupedMessages = payload?.message?.grouped_messages ?? payload?.grouped_messages
+    if (!groupedMessages || typeof groupedMessages !== 'object') return collected
+
+    Object.values(groupedMessages).forEach((dayMessages) => {
+      if (!Array.isArray(dayMessages)) return
+
+      dayMessages.forEach((item) => {
+        if (!item || typeof item !== 'object') return
+
+        const text = getTextValue(item.message)
+        if (!text) return
+
+        const senderRole = item.sender_role ?? item.sender ?? item.role ?? item.from ?? 'Poshtibot'
+        const sender = String(senderRole).toLowerCase()
+
+        const normalizedSender =
+          sender === 'user' ? 'user' : sender === 'agent' ? 'agent' : sender === 'poshtibot' ? 'poshtibot' : 'poshtibot'
+
+        collected.push({
+          sender: normalizedSender,
+          message: text,
+          id: item.message_id ?? item.id ?? item._id ?? makeId()
+        })
+      })
+    })
+
+    return collected
+  }, [])
+
+  useEffect(() => {
+    if (!chatbotId) {
+      setResolvedChatId(null)
+      return
+    }
+
+    const storedChatData = storage.getJSON(Keys.chatData(chatbotId)) ?? {}
+    const storedChatId = storedChatData?.poshtibot_chat_id ?? null
+    setResolvedChatId((prev) => (prev === storedChatId ? prev : storedChatId))
+  }, [chatbotId, chatId])
+
+  useEffect(() => {
+    if (!chatbotId || !resolvedChatId) return
+
+    const historyKey = `${chatbotId}:${resolvedChatId}`
+    if (loadedHistoryRef.current.has(historyKey)) return
+    loadedHistoryRef.current.add(historyKey)
+
+    // let isActive = true
+
+    const loadChatMessages = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get_chat_messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: resolvedChatId })
+        })
+
+        if (!response.ok) return
+
+        const payload = await response.json().catch(() => null)
+        const formattedMessages = extractMessagesFromPayload(payload)
+
+        // if (!isActive) return
+
+        setShowInitMsg(false)
+        const nextMessages = formattedMessages
+
+        storage.setJSON(Keys.messages(chatbotId), nextMessages)
+        setAllMessages(nextMessages)
+      } catch (error) {
+        console.error('[Chat] Failed to load chat history:', error)
+      }
+    }
+
+    loadChatMessages()
+
+    // return () => {
+    //   isActive = false
+    // }
+  }, [chatbotId, extractMessagesFromPayload, resolvedChatId, setAllMessages])
 
   const needsLeads = Boolean(
     config &&
-      (config?.leads_from_name || config?.leads_from_email || config?.leads_from_mobile) &&
-      !persistedChatData.leads_collected
+    (config?.leads_from_name || config?.leads_from_email || config?.leads_from_mobile) &&
+    !persistedChatData.leads_collected
   )
 
   const initRef = useRef(false)
@@ -97,7 +196,11 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
   const handleSendMessage = useCallback(
     (messageText) => {
       if (!messageText?.trim() || !chatbotId) return
-      const newMsg = { sender: 'user', message: messageText, id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}` }
+      const newMsg = {
+        sender: 'user',
+        message: messageText,
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      }
       setAllMessages((prev) => {
         const next = [...prev, newMsg]
         storage.setJSON(Keys.messages(chatbotId), next)
@@ -109,10 +212,7 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
     [chatbotId, chatId, config?.user_flows_data, sendUserMessage, setAllMessages]
   )
 
-  const handleStarterClick = useCallback(
-    (text) => handleSendMessage(text),
-    [handleSendMessage]
-  )
+  const handleStarterClick = useCallback((text) => handleSendMessage(text), [handleSendMessage])
 
   const handleCloseChat = useCallback(() => {
     setOpen(false)
@@ -138,7 +238,17 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
   }
 
   return (
-    <Box sx={{ height: '600px', display: 'flex', flexDirection: 'column', borderRadius: 7, overflow: 'hidden', backgroundImage: 'linear-gradient(0deg, rgba(0,0,0,0.5), rgba(0,0,0,0.8)),url(./images/widgetBg1.jpg)', backgroundSize: 'cover' }}>
+    <Box
+      sx={{
+        height: '600px',
+        display: 'flex',
+        flexDirection: 'column',
+        borderRadius: 7,
+        overflow: 'hidden',
+        backgroundImage: 'linear-gradient(0deg, rgba(0,0,0,0.5), rgba(0,0,0,0.8)),url(./images/widgetBg1.jpg)',
+        backgroundSize: 'cover'
+      }}
+    >
       <ChatHeader
         notifications
         onToggleNotifications={() => {}}
@@ -151,7 +261,12 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
         <CollectLeads config={config} chatbotId={chatbotId} />
       ) : (
         <>
-          <MessageList allMessages={allMessages} isTyping={isTyping} chatEndRef={chatEndRef} agentStatus={agentStatus} />
+          <MessageList
+            allMessages={allMessages}
+            isTyping={isTyping}
+            chatEndRef={chatEndRef}
+            agentStatus={agentStatus}
+          />
 
           {agentStatus === 'none' && (
             <AgentButton

@@ -6,33 +6,47 @@ import { motion } from 'framer-motion'
 import { Icon } from '@iconify/react'
 import threeDotsFade from '@iconify-icons/svg-spinners/3-dots-fade'
 
-const Message = memo(({ msg }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.25 }}
-    style={{
-      display: 'flex',
-      justifyContent: msg.sender === 'user' ? 'flex-start' : 'flex-end'
-    }}
-  >
-    <Box
-      sx={{
-        maxWidth: '75%',
-        px: 2,
-        py: 1,
-        borderRadius: 2,
-        background: msg.sender === 'user' ? '#a3f5c4' : '#f5f9f9',
-        fontSize: 15,
-        color: 'black',
-        wordBreak: 'break-word',
-        textAlign: 'justify'
+const Message = memo(({ msg }) => {
+  // const messageText =
+  //   typeof msg?.message === 'string'
+  //     ? msg.message
+  //     : typeof msg?.message?.text === 'string'
+  //       ? msg.message.text
+  //       : typeof msg?.message?.message === 'string'
+  //         ? msg.message.message
+  //         : typeof msg?.message?.content === 'string'
+  //           ? msg.message.content
+  //           : ''
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      style={{
+        display: 'flex',
+        justifyContent: msg.sender === 'user' ? 'flex-start' : 'flex-end'
       }}
     >
-      {msg.message}
-    </Box>
-  </motion.div>
-))
+      <Box
+        sx={{
+          maxWidth: '75%',
+          px: 2,
+          py: 1,
+          borderRadius: 2,
+          background: msg.sender === 'user' ? '#a3f5c4' : '#f5f9f9',
+          fontSize: 15,
+          color: 'black',
+          wordBreak: 'break-word',
+          textAlign: 'justify',
+          whiteSpace: 'pre-wrap'
+        }}
+      >
+        {msg.message}
+      </Box>
+    </motion.div>
+  )
+})
 Message.displayName = 'Message'
 
 const MessageList = ({ allMessages, isTyping, chatEndRef, agentStatus }) => (
@@ -55,15 +69,13 @@ const MessageList = ({ allMessages, isTyping, chatEndRef, agentStatus }) => (
       <Message key={msg.id} msg={msg} />
     ))}
 
-    {isTyping &&
-      agentStatus !== 'joined' &&
-      ''(
-        <Box display='flex' justifyContent='flex-end'>
-          <Box sx={{ px: 2, pt: 1, mb: 3, borderRadius: 2, color: '#20403c', bgcolor: '#fff' }}>
-            <Icon icon={threeDotsFade} width='24' height='24' />
-          </Box>
+    {isTyping && agentStatus !== 'joined' ? (
+      <Box display='flex' justifyContent='flex-end'>
+        <Box sx={{ px: 2, pt: 1, mb: 3, borderRadius: 2, color: '#20403c', bgcolor: '#fff' }}>
+          <Icon icon={threeDotsFade} width='24' height='24' />
         </Box>
-      )}
+      </Box>
+    ) : null}
 
     <div ref={chatEndRef} />
   </Box>
