@@ -207,9 +207,9 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
         return next
       })
       setShowInitMsg(false)
-      sendUserMessage(config?.user_flows_data, chatId, messageText)
+      sendUserMessage(config?.user_flows_data, messageText)
     },
-    [chatbotId, chatId, config?.user_flows_data, sendUserMessage, setAllMessages]
+    [chatbotId, config?.user_flows_data, sendUserMessage, setAllMessages]
   )
 
   const handleStarterClick = useCallback((text) => handleSendMessage(text), [handleSendMessage])
@@ -274,7 +274,6 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
               isVisible={isAgentButtonVisible}
               userId={userId}
               chatId={chatId}
-              userFlowsData={config?.user_flows_data}
             />
           )}
 

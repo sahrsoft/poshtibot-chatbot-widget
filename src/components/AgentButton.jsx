@@ -6,17 +6,17 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useChat } from '@/hooks/useChat'
 import { storage, Keys } from '@/lib/constants'
 
-const AgentButton = ({ chatbotId, userId, chatId, isVisible, userFlowsData }) => {
+const AgentButton = ({ chatbotId, userId, chatId, isVisible }) => {
   const { requestForAgent, agentStatus } = useChat({ chatbotId, userId, chatId })
 
   const handleRequestForAgent = useCallback(() => {
     if (!chatbotId) return
-    requestForAgent(chatId, userFlowsData)
+    requestForAgent()
     const chatData = storage.getJSON(Keys.chatData(chatbotId))
     if (chatData) {
       storage.setJSON(Keys.chatData(chatbotId), { ...chatData, agent_status: 'pending' })
     }
-  }, [chatId, chatbotId, requestForAgent, userFlowsData])
+  }, [chatbotId, requestForAgent])
 
   return (
     <AnimatePresence>

@@ -38,7 +38,6 @@ const Message = memo(({ msg }) => {
           fontSize: 15,
           color: 'black',
           wordBreak: 'break-word',
-          textAlign: 'justify',
           whiteSpace: 'pre-wrap'
         }}
       >

@@ -146,18 +146,16 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true }) {
   }, [chatbotId, chatId, userId, agentName, resetUnread])
 
   const sendUserMessage = useCallback(
-    (userFlowsData, chatId, message) => {
+    (userFlowsData, message) => {
       const socket = socketRef.current
-      if (!socket || !userId || !chatId) return
+      if (!socket || !userId) return
       socket.emit('user:message', {
-        chatbot_id: chatbotId,
         to_agent: agentStatusRef.current === 'joined',
         user_flows_data: userFlowsData,
-        chat_id: chatId,
         message
       })
     },
-    [chatbotId, userId]
+    [userId]
   )
 
   const requestForAgent = useCallback(
