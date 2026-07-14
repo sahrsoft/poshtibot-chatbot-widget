@@ -20,6 +20,8 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
 
   const { config, loading, chatId, userId, allMessages, setAllMessages, starterMessages } = usePoshtibotSetup(chatbotId)
 
+  const [leadsCollected, setLeadsCollected] = useState(false)
+
   const persistedChatData = useMemo(
     () => (chatbotId ? (storage.getJSON(Keys.chatData(chatbotId)) ?? {}) : {}),
     [chatbotId]
@@ -143,7 +145,8 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
   const needsLeads = Boolean(
     config &&
     (config?.leads_from_name || config?.leads_from_email || config?.leads_from_mobile) &&
-    !persistedChatData.leads_collected
+    !persistedChatData.leads_collected &&
+    !leadsCollected
   )
 
   const initRef = useRef(false)
@@ -258,7 +261,11 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
       />
 
       {needsLeads ? (
-        <CollectLeads config={config} chatbotId={chatbotId} />
+        <CollectLeads config={config} chatbotId={chatbotId} onLeadsCollected={() => {
+          const chatData = storage.getJSON(Keys.chatData(chatbotId)) ?? {}
+          storage.setJSON(Keys.chatData(chatbotId), { ...chatData, leads_collected: true })
+          setLeadsCollected(true)
+        }} />
       ) : (
         <>
           <MessageList

@@ -12,7 +12,7 @@ function validateField(name, value) {
   return ''
 }
 
-const CollectLeads = ({ config, chatbotId }) => {
+const CollectLeads = ({ config, chatbotId, onLeadsCollected }) => {
   const [formData, setFormData] = useState(() => {
     const chatData = chatbotId ? storage.getJSON(Keys.chatData(chatbotId)) : null
     return {
@@ -58,7 +58,7 @@ const CollectLeads = ({ config, chatbotId }) => {
           const chatData = storage.getJSON(Keys.chatData(chatbotId)) ?? {}
           storage.setJSON(Keys.chatData(chatbotId), { ...chatData, leads_collected: true })
         }
-        window.location.reload()
+        onLeadsCollected?.()
       } catch {
         // Error handled silently
       } finally {
