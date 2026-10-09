@@ -30,6 +30,15 @@ export function WidgetLauncher({ config, onClick, unreadCount = 0 }) {
         cursor: "pointer"
       }}
       onClick={onClick}
+      role="button"
+      tabIndex={0}
+      aria-label={config?.label_text || 'باز کردن گفتگو'}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onClick?.()
+        }
+      }}
     >
       {/* Icon Button */}
       <Box

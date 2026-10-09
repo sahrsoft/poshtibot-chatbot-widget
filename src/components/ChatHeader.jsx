@@ -24,6 +24,7 @@ const ChatHeader = ({ notifications, onToggleNotifications, onCloseChat, agentSt
     <Box display='flex' alignItems='center'>
       {agentStatus === 'none' ? (
         <IconButton
+          aria-label='لوگوی پشتیبات'
           sx={{
             bgcolor: 'white',
             ml: 1,
@@ -36,6 +37,7 @@ const ChatHeader = ({ notifications, onToggleNotifications, onCloseChat, agentSt
         </IconButton>
       ) : agentStatus === 'joined' ? (
         <IconButton
+          aria-label='پروفایل پشتیبان'
           sx={{
             bgcolor: 'white',
             ml: 1,
@@ -62,10 +64,10 @@ const ChatHeader = ({ notifications, onToggleNotifications, onCloseChat, agentSt
     </Box>
 
     <Box>
-      <IconButton onClick={onToggleNotifications} sx={{ color: '#fff', border: '1px solid #e3eded' }}>
+      <IconButton aria-label={notifications ? 'خاموش کردن اعلان‌ها' : 'روشن کردن اعلان‌ها'} onClick={onToggleNotifications} sx={{ color: '#fff', border: '1px solid #e3eded' }}>
         <Icon icon={notifications ? bellAlert : bellSlash} width='24' height='24' />
       </IconButton>
-      <IconButton onClick={onCloseChat} sx={{ color: '#fff', border: '1px solid #e3eded', mx: 1 }}>
+      <IconButton aria-label='بستن گفتگو' onClick={onCloseChat} sx={{ color: '#fff', border: '1px solid #e3eded', mx: 1 }}>
         <Icon icon={iconParkOutline} width='24' height='24' />
       </IconButton>
     </Box>

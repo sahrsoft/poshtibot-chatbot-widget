@@ -13,7 +13,7 @@ import CollectLeads from './CollectLeads'
 import PendingForAgent from './PendingForAgent'
 import { storage, Keys } from '@/lib/constants'
 
-const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
+const ChatWidget = ({ chatbotId: propChatbotId, setOpen, chatSession, parentOrigin }) => {
   const chatEndRef = useRef(null)
 
   const chatbotId = propChatbotId
@@ -27,8 +27,10 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
     [chatbotId]
   )
 
+  const localChatSession = useChat({ chatbotId, userId, chatId, enabled: !chatSession })
   const {
     sendUserMessage,
+    requestForAgent,
     messages,
     isTyping,
     agentStatus,
@@ -38,10 +40,10 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
     setAgentName,
     emitTyping,
     emitStopTyping
-  } = useChat({ chatbotId, userId, chatId })
+  } = chatSession ?? localChatSession
 
   const [showInitMsg, setShowInitMsg] = useState(true)
-  const [resolvedChatId, setResolvedChatId] = useState(chatId)
+  const resolvedChatId = chatId ?? persistedChatData?.poshtibot_chat_id ?? null
   const loadedHistoryRef = useRef(new Set())
 
   const extractMessagesFromPayload = useCallback((payload) => {
@@ -91,17 +93,6 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
   }, [])
 
   useEffect(() => {
-    if (!chatbotId) {
-      setResolvedChatId(null)
-      return
-    }
-
-    const storedChatData = storage.getJSON(Keys.chatData(chatbotId)) ?? {}
-    const storedChatId = storedChatData?.poshtibot_chat_id ?? null
-    setResolvedChatId((prev) => (prev === storedChatId ? prev : storedChatId))
-  }, [chatbotId, chatId])
-
-  useEffect(() => {
     if (!chatbotId || !resolvedChatId) return
 
     const historyKey = `${chatbotId}:${resolvedChatId}`
@@ -112,7 +103,7 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
 
     const loadChatMessages = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get_chat_messages`, {
+        const response = await fetch('/api/get_chat_messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ chat_id: resolvedChatId })
@@ -126,10 +117,10 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
         // if (!isActive) return
 
         setShowInitMsg(false)
-        const nextMessages = formattedMessages
-
-        storage.setJSON(Keys.messages(chatbotId), nextMessages)
-        setAllMessages(nextMessages)
+        if (formattedMessages.length > 0) {
+          storage.setJSON(Keys.messages(chatbotId), formattedMessages)
+          setAllMessages(formattedMessages)
+        }
       } catch (error) {
         console.error('[Chat] Failed to load chat history:', error)
       }
@@ -218,9 +209,11 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
   const handleStarterClick = useCallback((text) => handleSendMessage(text), [handleSendMessage])
 
   const handleCloseChat = useCallback(() => {
-    setOpen(false)
-    window.parent.postMessage({ type: 'CLOSE_CHAT_WIDGET' }, '*')
-  }, [setOpen])
+    setOpen?.(false)
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: 'CLOSE_CHAT_WIDGET' }, parentOrigin || '*')
+    }
+  }, [parentOrigin, setOpen])
 
   const isAgentButtonVisible = useMemo(() => {
     const userCount = allMessages.filter((m) => m.sender === 'user').length
@@ -248,7 +241,7 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
         flexDirection: 'column',
         borderRadius: 7,
         overflow: 'hidden',
-        backgroundImage: 'linear-gradient(0deg, rgba(0,0,0,0.5), rgba(0,0,0,0.8)),url(./images/widgetBg1.jpg)',
+        backgroundImage: 'linear-gradient(0deg, rgba(0,0,0,0.5), rgba(0,0,0,0.8)),url(/images/widgetBg1.jpg)',
         backgroundSize: 'cover'
       }}
     >
@@ -279,8 +272,9 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen }) => {
             <AgentButton
               chatbotId={chatbotId}
               isVisible={isAgentButtonVisible}
-              userId={userId}
               chatId={chatId}
+              requestForAgent={requestForAgent}
+              agentStatus={agentStatus}
             />
           )}
 

@@ -32,7 +32,7 @@ export function useWidgetConfig(chatbotId) {
 
     async function fetchConfig() {
       try {
-        const data = await api.get(`/get_widget_config?chatbot_id=${chatbotId}`)
+        const data = await api.get(`/get_widget_config?chatbot_id=${encodeURIComponent(chatbotId)}`)
 
         if (cancelled) return
 

@@ -22,6 +22,9 @@ RUN npm run build
 FROM node:20-alpine AS runner
 
 ENV PORT=3000
+ENV NODE_ENV=production
+# Set this at runtime (for example with `docker run -e API_SERVER_URL=...`).
+ENV API_SERVER_URL=""
 
 WORKDIR /app
 

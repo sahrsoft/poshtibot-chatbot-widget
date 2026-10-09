@@ -8,7 +8,7 @@ function buildMessage(sender, message, id) {
   return { sender, message, id: id ?? Date.now() + Math.random() }
 }
 
-export function useChat({ chatbotId, userId, chatId, isOpen = true }) {
+export function useChat({ chatbotId, userId, chatId, isOpen = true, enabled = true }) {
   const [messages, setMessages] = useState([])
   const [typingUsers, setTypingUsers] = useState(new Set())
   const [botTyping, setBotTyping] = useState(false)
@@ -19,6 +19,7 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true }) {
 
   const socketRef = useRef(null)
   const agentStatusRef = useRef(agentStatus)
+  const agentNameRef = useRef(agentName)
   const isOpenRef = useRef(isOpen)
   const chatbotIdRef = useRef(chatbotId)
 
@@ -28,6 +29,9 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true }) {
     agentStatusRef.current = agentStatus
   }, [agentStatus])
   useEffect(() => {
+    agentNameRef.current = agentName
+  }, [agentName])
+  useEffect(() => {
     isOpenRef.current = isOpen
   }, [isOpen])
   useEffect(() => {
@@ -35,7 +39,7 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true }) {
   }, [chatbotId])
 
   useEffect(() => {
-    if (!chatbotId || !userId || !chatId) return
+    if (!enabled || !chatbotId || !userId || !chatId) return
 
     const socket = getSocket(userId)
     if (!socket) return
@@ -80,7 +84,7 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true }) {
     }
 
     const onAgentMessage = (data) => {
-      const sender = data?.agent_name || agentName || 'پشتیبان'
+      const sender = data?.agent_name || agentNameRef.current || 'پشتیبان'
       appendMessage(sender, data?.message ?? data)
     }
 
@@ -143,28 +147,28 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true }) {
       socket.off('poshtibot:typing', onBotTyping)
       socket.off('poshtibot:stop_typing', onBotStopTyping)
     }
-  }, [chatbotId, chatId, userId, agentName, resetUnread])
+  }, [chatbotId, chatId, userId, enabled, resetUnread])
 
   const sendUserMessage = useCallback(
     (userFlowsData, message) => {
       const socket = socketRef.current
-      if (!socket || !userId) return
+      if (!socket || !userId || !chatId) return
       socket.emit('user:message', {
         to_agent: agentStatusRef.current === 'joined',
         user_flows_data: userFlowsData,
         message
       })
     },
-    [userId]
+    [chatId, userId]
   )
 
   const requestForAgent = useCallback(
-    (chatId) => {
+    (requestedChatId = chatId) => {
       const socket = socketRef.current
-      if (!socket) return
-      socket.emit('user:request_for_agent', { userId, chat_id: chatId, chatbotId })
+      if (!socket || !userId || !requestedChatId) return
+      socket.emit('user:request_for_agent', { userId, chat_id: requestedChatId, chatbotId })
     },
-    [chatbotId, userId]
+    [chatbotId, chatId, userId]
   )
 
   const cancelRequestForAgent = useCallback(

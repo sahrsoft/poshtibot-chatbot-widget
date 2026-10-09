@@ -1,11 +1,11 @@
 import { io } from 'socket.io-client'
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || ''
 const SOCKET_OPTIONS = {
   path: '/fsocket/socket.io',
   transports: ['websocket'],
   reconnection: true,
-  reconnectionAttempts: Infinity,
+  reconnectionAttempts: 10,
   reconnectionDelay: 1000,
   reconnectionDelayMax: 5000,
   randomizationFactor: 0.5
@@ -26,7 +26,7 @@ function notifyListeners(event, ...args) {
 }
 
 export function getSocket(userId) {
-  if (!userId) return null
+  if (!userId || !SOCKET_URL) return null
 
   if (socket && currentUserId !== userId) {
     disconnectSocket()

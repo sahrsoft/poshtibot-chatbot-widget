@@ -24,6 +24,7 @@ const CollectLeads = ({ config, chatbotId, onLeadsCollected }) => {
   })
 
   const [errors, setErrors] = useState({})
+  const [submitError, setSubmitError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   const handleChange = useCallback((e) => {
@@ -52,6 +53,7 @@ const CollectLeads = ({ config, chatbotId, onLeadsCollected }) => {
       e.preventDefault()
       if (!validate()) return
       setSubmitting(true)
+      setSubmitError('')
       try {
         await api.post('/collect_leads', formData)
         if (chatbotId) {
@@ -60,12 +62,12 @@ const CollectLeads = ({ config, chatbotId, onLeadsCollected }) => {
         }
         onLeadsCollected?.()
       } catch {
-        // Error handled silently
+        setSubmitError('ارسال اطلاعات انجام نشد. لطفا دوباره تلاش کنید.')
       } finally {
         setSubmitting(false)
       }
     },
-    [chatbotId, formData, validate]
+    [chatbotId, formData, onLeadsCollected, validate]
   )
 
   const fieldSx = {
@@ -107,6 +109,11 @@ const CollectLeads = ({ config, chatbotId, onLeadsCollected }) => {
         <Typography fontSize={14} mb={2}>
           لطفا جهت پاسخگویی بهتر فرم زیر را تکمیل کنید.
         </Typography>
+        {submitError && (
+          <Typography color='error' fontSize={12} mb={2} role='alert'>
+            {submitError}
+          </Typography>
+        )}
 
         {config.leads_from_name === 1 && (
           <TextField

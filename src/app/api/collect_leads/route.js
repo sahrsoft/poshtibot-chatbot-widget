@@ -5,8 +5,11 @@ export async function POST(request) {
     const body = await request.json()
     const { chat_id, name, email, mobile } = body
 
-    if (chat_id === undefined || chat_id === null) {
+    if (typeof chat_id !== 'string' || chat_id.length === 0 || chat_id.length > 128) {
       return NextResponse.json({ error: 'chat_id is required' }, { status: 400 })
+    }
+    if (!process.env.API_SERVER_URL) {
+      return NextResponse.json({ error: 'Service unavailable' }, { status: 503 })
     }
 
     const res = await fetch(`${process.env.API_SERVER_URL}.collect_leads`, {
@@ -15,9 +18,10 @@ export async function POST(request) {
       body: JSON.stringify({ chat_id, name, email, mobile })
     })
 
-    const apiResponse = await res.json()
+    const apiResponse = await res.json().catch(() => ({}))
     return NextResponse.json(apiResponse, { status: res.ok ? 200 : res.status })
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('[API collect_leads]', error)
+    return NextResponse.json({ error: 'Unable to submit lead information' }, { status: 502 })
   }
 }

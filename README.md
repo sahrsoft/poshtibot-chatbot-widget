@@ -1,4 +1,17 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Poshtibot Chatbot Widget
+
+Production deployment requires `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SOCKET_URL`,
+`NEXT_PUBLIC_SERVER_URL`, and the server-only `API_SERVER_URL`. Copy `.env.example`
+for local development. `API_SERVER_URL` must be supplied at container runtime.
+
+The embed supports `data-widget-url` and `data-server-url` attributes for staging:
+
+```html
+<script src="https://widget.poshtibot.com/widget.js"
+  data-chatbot-id="YOUR_CHATBOT_ID"
+  data-widget-url="https://widget.poshtibot.com"
+  data-server-url="https://server.poshtibot.com"></script>
+```
 
 ## Getting Started
 

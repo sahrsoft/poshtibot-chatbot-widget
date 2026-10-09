@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, useMemo, useReducer } from 'react'
 import { Box } from '@mui/material'
 import { AnimatePresence } from 'framer-motion'
 import { v4 as uuidv4 } from 'uuid'
@@ -15,21 +15,34 @@ export default function WidgetRoot({ chatbotId }) {
   const [open, setOpen] = useState(false)
   const { config } = useWidgetConfig(chatbotId)
   const initializedRef = useRef(false)
-
+  const [, refreshChatData] = useReducer((version) => version + 1, 0)
   const chatData = chatbotId ? storage.getJSON(Keys.chatData(chatbotId)) : null
+  const parentOrigin = useMemo(() => {
+    if (typeof document === 'undefined') return ''
+    try {
+      return document.referrer ? new URL(document.referrer).origin : window.location.origin
+    } catch {
+      return window.location.origin
+    }
+  }, [])
 
-  const { unreadCount } = useChat({
+  const chatSession = useChat({
     chatbotId,
     userId: chatData?.poshtibot_user_id,
     chatId: chatData?.poshtibot_chat_id,
     isOpen: open
   })
+  const { unreadCount } = chatSession
 
   useEffect(() => {
-    if (!chatbotId || !config?.user_flows_data || initializedRef.current) return
-    if (storage.getJSON(Keys.chatData(chatbotId))) return
+    if (!chatbotId || initializedRef.current) return
 
     initializedRef.current = true
+    const existingChatData = storage.getJSON(Keys.chatData(chatbotId))
+    if (existingChatData) {
+      refreshChatData()
+      return
+    }
 
     const newChatData = {
       poshtibot_chat_id: uuidv4(),
@@ -37,35 +50,37 @@ export default function WidgetRoot({ chatbotId }) {
       agent_status: 'none'
     }
     storage.setJSON(Keys.chatData(chatbotId), newChatData)
+    refreshChatData()
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/add_new_chat_on_widget_lunch`, {
+    fetch('/api/add_new_chat_on_widget_lunch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        user_flows_data: config.user_flows_data,
+        user_flows_data: config?.user_flows_data ?? null,
         chat_id: newChatData.poshtibot_chat_id
       })
-    }).catch(() => {})
+    }).catch((error) => console.error('[Widget] Failed to initialize chat:', error))
   }, [chatbotId, config])
 
   useEffect(() => {
     const handleMessage = (event) => {
+      if (event.source !== window.parent || (parentOrigin && event.origin !== parentOrigin)) return
       if (event.data?.type === 'CLOSE_CHAT_WIDGET' || event.data?.type === 'OUTSIDE_CLICK') {
         setOpen(false)
-        window.parent.postMessage({ type: 'CLOSE_WIDGET' }, '*')
+        window.parent.postMessage({ type: 'CLOSE_WIDGET' }, parentOrigin)
       }
     }
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
-  }, [])
+  }, [parentOrigin])
 
   const toggleWidget = useCallback(() => {
     setOpen((prev) => {
       const next = !prev
-      window.parent.postMessage({ type: next ? 'OPEN_WIDGET' : 'CLOSE_WIDGET' }, '*')
+      window.parent.postMessage({ type: next ? 'OPEN_WIDGET' : 'CLOSE_WIDGET' }, parentOrigin)
       return next
     })
-  }, [])
+  }, [parentOrigin])
 
   return (
     <>
@@ -93,7 +108,14 @@ export default function WidgetRoot({ chatbotId }) {
           background: '#fff'
         }}
       >
-        {open && <ChatWidget chatbotId={chatbotId} setOpen={setOpen} />}
+        {open && (
+          <ChatWidget
+            chatbotId={chatbotId}
+            setOpen={setOpen}
+            chatSession={chatSession}
+            parentOrigin={parentOrigin}
+          />
+        )}
       </Box>
     </>
   )

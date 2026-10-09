@@ -7,10 +7,15 @@
     return
   }
 
+  const widgetUrl = script.getAttribute('data-widget-url') || 'https://widget.poshtibot.com'
+  const serverUrl = script.getAttribute('data-server-url') || 'https://server.poshtibot.com'
+  const widgetOrigin = new URL(widgetUrl).origin
+  const serverOrigin = new URL(serverUrl).origin
+  const encodedChatbotId = encodeURIComponent(chatbotId)
   let position = 'right'
   try {
     const res = await fetch(
-      `https://server.poshtibot.com/api/method/poshtibot.api.get_widget_config?chatbot_id=${chatbotId}`
+      `${serverOrigin}/api/method/poshtibot.api.get_widget_config?chatbot_id=${encodedChatbotId}`
     )
     if (res.ok) {
       const data = await res.json()
@@ -21,10 +26,10 @@
   }
 
   const iframe = document.createElement('iframe')
-  iframe.src = `https://widget.poshtibot.com/widget?chatbot_id=${chatbotId}`
+  iframe.src = `${widgetUrl.replace(/\/$/, '')}/widget?chatbot_id=${encodedChatbotId}`
   iframe.id = 'poshtibot-widget-frame'
   iframe.title = 'Poshtibot Chat'
-  iframe.allow = 'microphone; camera'
+  iframe.allow = ''
   iframe.style.cssText = `
     position: fixed;
     bottom: 24px;
@@ -43,6 +48,7 @@
 
   window.addEventListener('message', (event) => {
     if (!event.data?.type) return
+    if (event.source !== iframe.contentWindow || event.origin !== widgetOrigin) return
 
     if (event.data.type === 'OPEN_WIDGET') {
       iframe.style.borderRadius = '0'
@@ -75,7 +81,7 @@
       event.clientY <= rect.bottom
 
     if (!clickedInside) {
-      iframe.contentWindow.postMessage({ type: 'OUTSIDE_CLICK' }, '*')
+      iframe.contentWindow.postMessage({ type: 'OUTSIDE_CLICK' }, widgetOrigin)
     }
   })
 })()

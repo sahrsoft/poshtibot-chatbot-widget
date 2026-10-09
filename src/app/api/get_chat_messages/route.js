@@ -5,8 +5,11 @@ export async function POST(request) {
     const body = await request.json()
     const { chat_id } = body
 
-    if (!chat_id) {
+    if (!chat_id || typeof chat_id !== 'string' || chat_id.length > 128) {
       return NextResponse.json({ error: 'chat_id is required' }, { status: 400 })
+    }
+    if (!process.env.API_SERVER_URL) {
+      return NextResponse.json({ error: 'Service unavailable' }, { status: 503 })
     }
 
     const res = await fetch(`${process.env.API_SERVER_URL}.get_chat_messages`, {
@@ -18,6 +21,7 @@ export async function POST(request) {
     const apiResponse = await res.json().catch(() => null)
     return NextResponse.json(apiResponse ?? {}, { status: res.ok ? 200 : res.status })
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('[API get_chat_messages]', error)
+    return NextResponse.json({ error: 'Unable to load chat messages' }, { status: 502 })
   }
 }
