@@ -5,12 +5,18 @@ import { Box, List, ListItem, ListItemIcon, ListItemText, Typography } from '@mu
 import { Icon } from '@iconify/react'
 import chatLineBold from '@iconify-icons/solar/chat-line-bold'
 
-const ChatStarters = ({ starters, onStarterClick }) => {
-  // Filter enabled starters once
-  const enabledStarters = starters?.filter(s => s.enable && s.message.trim())
+function isEnabledStarter(starter) {
+  if (!starter?.message?.trim()) return false
+  const flag = starter.enabled ?? starter.enable
+  if (flag === undefined || flag === null) return true
+  return flag === true || flag === 1 || flag === '1'
+}
 
-  if (enabledStarters?.length === 0) {
-    return null // Don't render anything if there are no valid starters
+const ChatStarters = ({ starters, onStarterClick }) => {
+  const enabledStarters = (starters || []).filter(isEnabledStarter)
+
+  if (enabledStarters.length === 0) {
+    return null
   }
 
   return (
@@ -34,9 +40,9 @@ const ChatStarters = ({ starters, onStarterClick }) => {
       }}
     >
       <List sx={{ p: 0, ml: .5 }}>
-        {enabledStarters?.map((starter, index) => (
+        {enabledStarters.map((starter, index) => (
           <ListItem
-            key={index}
+            key={starter.message_id || index}
             onClick={() => onStarterClick(starter.message)}
             sx={{
               px: 1,

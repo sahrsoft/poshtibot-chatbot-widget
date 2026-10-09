@@ -41,6 +41,20 @@ const Message = memo(({ msg }) => {
           whiteSpace: 'pre-wrap'
         }}
       >
+        {msg.audio_url ? (
+          <Box component='audio' controls src={msg.audio_url} sx={{ width: '100%', mt: msg.message ? 1 : 0 }} />
+        ) : null}
+        {msg.file_url ? (
+          <Box
+            component='a'
+            href={msg.file_url}
+            target='_blank'
+            rel='noreferrer'
+            sx={{ display: 'block', color: '#0a7a4b', mt: msg.message ? 1 : 0 }}
+          >
+            دانلود فایل
+          </Box>
+        ) : null}
         {msg.message}
       </Box>
     </motion.div>

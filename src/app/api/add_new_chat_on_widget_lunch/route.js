@@ -8,6 +8,9 @@ export async function POST(request) {
     if (!chat_id || typeof chat_id !== 'string' || chat_id.length > 128) {
       return NextResponse.json({ error: 'chat_id is required' }, { status: 400 })
     }
+    if (!user_flows_data || typeof user_flows_data !== 'string') {
+      return NextResponse.json({ error: 'user_flows_data is required' }, { status: 400 })
+    }
     if (!process.env.API_SERVER_URL) {
       return NextResponse.json({ error: 'Service unavailable' }, { status: 503 })
     }

@@ -8,7 +8,7 @@ import bellAlert from '@iconify-icons/heroicons/bell-alert'
 import bellSlash from '@iconify-icons/heroicons/bell-slash'
 import iconParkOutline from '@iconify-icons/icon-park-outline/down'
 
-const ChatHeader = ({ notifications, onToggleNotifications, onCloseChat, agentStatus, agentName }) => (
+const ChatHeader = ({ notifications, onToggleNotifications, onCloseChat, agentStatus, agentName, botName }) => (
   <Box
     sx={{
       background: '#00d285',
@@ -57,7 +57,7 @@ const ChatHeader = ({ notifications, onToggleNotifications, onCloseChat, agentSt
       ) : null}
 
       <Typography>
-        {agentStatus === 'none' && 'در حال مکالمه با پشتیبات'}
+        {agentStatus === 'none' && `در حال مکالمه با ${botName || 'پشتیبات'}`}
         {agentStatus === 'pending' && 'در انتظار پشتیبان'}
         {agentStatus === 'joined' && `در حال مکالمه با ${agentName}`}
       </Typography>

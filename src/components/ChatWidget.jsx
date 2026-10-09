@@ -27,7 +27,13 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen, chatSession, parentOrig
     [chatbotId]
   )
 
-  const localChatSession = useChat({ chatbotId, userId, chatId, enabled: !chatSession })
+  const fallbackChatSession = useChat({
+    chatbotId,
+    userId,
+    chatId,
+    isOpen: true,
+    enabled: !chatSession
+  })
   const {
     sendUserMessage,
     requestForAgent,
@@ -40,7 +46,7 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen, chatSession, parentOrig
     setAgentName,
     emitTyping,
     emitStopTyping
-  } = chatSession ?? localChatSession
+  } = chatSession ?? fallbackChatSession
 
   const [showInitMsg, setShowInitMsg] = useState(true)
   const resolvedChatId = chatId ?? persistedChatData?.poshtibot_chat_id ?? null
@@ -72,8 +78,10 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen, chatSession, parentOrig
       dayMessages.forEach((item) => {
         if (!item || typeof item !== 'object') return
 
-        const text = getTextValue(item.message)
-        if (!text) return
+        const text = getTextValue(item.message) || getTextValue(item.content)
+        const audioUrl = item.audio_url || null
+        const fileUrl = item.file_url || null
+        if (!text && !audioUrl && !fileUrl) return
 
         const senderRole = item.sender_role ?? item.sender ?? item.role ?? item.from ?? 'Poshtibot'
         const sender = String(senderRole).toLowerCase()
@@ -84,7 +92,10 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen, chatSession, parentOrig
         collected.push({
           sender: normalizedSender,
           message: text,
-          id: item.message_id ?? item.id ?? item._id ?? makeId()
+          id: item.message_id ?? item.id ?? item._id ?? makeId(),
+          audio_url: audioUrl,
+          file_url: fileUrl,
+          type: item.type
         })
       })
     })
@@ -251,6 +262,7 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen, chatSession, parentOrig
         onCloseChat={handleCloseChat}
         agentStatus={agentStatus}
         agentName={agentName}
+        botName={config?.bot_name}
       />
 
       {needsLeads ? (
@@ -279,7 +291,7 @@ const ChatWidget = ({ chatbotId: propChatbotId, setOpen, chatSession, parentOrig
           )}
 
           <Box sx={{ px: 0.5, borderTop: '1px solid #e3eded', bgcolor: '#fff' }}>
-            {showInitMsg && agentStatus === 'none' && (
+            {showInitMsg && agentStatus === 'none' && Number(config?.show_starter_messages) !== 0 && (
               <ChatStarters starters={starterMessages} onStarterClick={handleStarterClick} />
             )}
 

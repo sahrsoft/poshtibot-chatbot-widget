@@ -4,8 +4,28 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { getSocket } from '@/utils/socket/socket'
 import { storage, Keys } from '@/lib/constants'
 
-function buildMessage(sender, message, id) {
-  return { sender, message, id: id ?? Date.now() + Math.random() }
+function buildMessage(sender, message, extra = {}) {
+  return {
+    sender,
+    message,
+    id: extra.id ?? Date.now() + Math.random(),
+    audio_url: extra.audio_url,
+    file_url: extra.file_url,
+    type: extra.type
+  }
+}
+
+async function postJson(path, body) {
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(data?.error || data?.message?.error || `Request failed (${res.status})`)
+  }
+  return data
 }
 
 export function useChat({ chatbotId, userId, chatId, isOpen = true, enabled = true }) {
@@ -22,6 +42,7 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true, enabled = tr
   const agentNameRef = useRef(agentName)
   const isOpenRef = useRef(isOpen)
   const chatbotIdRef = useRef(chatbotId)
+  const chatIdRef = useRef(chatId)
 
   const resetUnread = useCallback(() => setUnreadCount(0), [])
 
@@ -37,6 +58,9 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true, enabled = tr
   useEffect(() => {
     chatbotIdRef.current = chatbotId
   }, [chatbotId])
+  useEffect(() => {
+    chatIdRef.current = chatId
+  }, [chatId])
 
   useEffect(() => {
     if (!enabled || !chatbotId || !userId || !chatId) return
@@ -69,8 +93,8 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true, enabled = tr
       }
     }
 
-    const appendMessage = (sender, messageText) => {
-      const msg = buildMessage(sender, messageText)
+    const appendMessage = (sender, messageText, extra = {}) => {
+      const msg = buildMessage(sender, messageText, extra)
       setMessages((prev) => {
         if (prev.some((m) => m.id === msg.id)) return prev
         const next = [...prev, msg]
@@ -85,12 +109,24 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true, enabled = tr
 
     const onAgentMessage = (data) => {
       const sender = data?.agent_name || agentNameRef.current || 'پشتیبان'
-      appendMessage(sender, data?.message ?? data)
+      const payload = typeof data === 'string' ? { message: data } : (data || {})
+      appendMessage(sender, payload.message ?? payload.content ?? '', {
+        id: payload.message_id,
+        audio_url: payload.audio_url,
+        file_url: payload.file_url,
+        type: payload.type
+      })
     }
 
     const onPoshtibotMessage = (message) => {
-      const text = typeof message === 'string' ? message : (message?.message ?? JSON.stringify(message))
-      appendMessage('poshtibot', text)
+      const payload = typeof message === 'string' ? { message } : (message || {})
+      const text = payload.message ?? payload.content ?? (typeof message === 'string' ? message : '')
+      appendMessage('poshtibot', text, {
+        id: payload.message_id,
+        audio_url: payload.audio_url,
+        file_url: payload.file_url,
+        type: payload.type
+      })
     }
 
     const onRequestForAgent = () => setAgentStatus('pending')
@@ -150,43 +186,62 @@ export function useChat({ chatbotId, userId, chatId, isOpen = true, enabled = tr
   }, [chatbotId, chatId, userId, enabled, resetUnread])
 
   const sendUserMessage = useCallback(
-    (userFlowsData, message) => {
-      const socket = socketRef.current
-      if (!socket || !userId || !chatId) return
-      socket.emit('user:message', {
+    (userFlowsData, message, extras = {}) => {
+      const activeChatId = chatIdRef.current
+      const activeChatbotId = chatbotIdRef.current
+      if (!userId || !activeChatId || !activeChatbotId || !userFlowsData) return
+
+      const payload = {
         to_agent: agentStatusRef.current === 'joined',
         user_flows_data: userFlowsData,
-        message
+        chatbot_id: activeChatbotId,
+        chat_id: activeChatId,
+        message: message || '',
+        ...extras
+      }
+
+      postJson('/api/send_widget_message', payload).catch((error) => {
+        console.error('[Chat] Failed to send message via Frappe:', error)
+      })
+    },
+    [userId]
+  )
+
+  const requestForAgent = useCallback(
+    (requestedChatId = chatId) => {
+      const targetChatId = requestedChatId || chatIdRef.current
+      if (!userId || !targetChatId) return
+      postJson('/api/request_for_agent', { chat_id: targetChatId }).catch((error) => {
+        console.error('[Chat] Failed to request agent:', error)
+      })
+      socketRef.current?.emit('user:request_for_agent', {
+        userId,
+        chat_id: targetChatId,
+        chatbotId: chatbotIdRef.current
       })
     },
     [chatId, userId]
   )
 
-  const requestForAgent = useCallback(
-    (requestedChatId = chatId) => {
-      const socket = socketRef.current
-      if (!socket || !userId || !requestedChatId) return
-      socket.emit('user:request_for_agent', { userId, chat_id: requestedChatId, chatbotId })
-    },
-    [chatbotId, chatId, userId]
-  )
-
   const cancelRequestForAgent = useCallback(
-    (chatId) => {
-      const socket = socketRef.current
-      if (!socket || !userId || !chatId) return
-      socket.emit('user:cancel_request_for_agent', { chat_id: chatId })
+    (requestedChatId) => {
+      const targetChatId = requestedChatId || chatIdRef.current
+      if (!userId || !targetChatId) return
+      postJson('/api/cancel_request_for_agent', { chat_id: targetChatId }).catch((error) => {
+        console.error('[Chat] Failed to cancel agent request:', error)
+      })
+      socketRef.current?.emit('user:cancel_request_for_agent', { chat_id: targetChatId })
     },
     [userId]
   )
 
   const emitTyping = useCallback(() => {
-    socketRef.current?.emit('typing', { chat_id: chatId })
-  }, [chatId])
+    socketRef.current?.emit('typing', { chat_id: chatIdRef.current })
+  }, [])
 
   const emitStopTyping = useCallback(() => {
-    socketRef.current?.emit('stop_typing', { chat_id: chatId })
-  }, [chatId])
+    socketRef.current?.emit('stop_typing', { chat_id: chatIdRef.current })
+  }, [])
 
   const isTyping = botTyping || typingUsers.size > 0
 

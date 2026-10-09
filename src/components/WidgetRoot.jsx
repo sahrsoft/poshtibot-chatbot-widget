@@ -14,7 +14,7 @@ import { storage, Keys } from '@/lib/constants'
 export default function WidgetRoot({ chatbotId }) {
   const [open, setOpen] = useState(false)
   const { config } = useWidgetConfig(chatbotId)
-  const initializedRef = useRef(false)
+  const lunchRef = useRef(false)
   const [, refreshChatData] = useReducer((version) => version + 1, 0)
   const chatData = chatbotId ? storage.getJSON(Keys.chatData(chatbotId)) : null
   const parentOrigin = useMemo(() => {
@@ -35,14 +35,15 @@ export default function WidgetRoot({ chatbotId }) {
   const { unreadCount } = chatSession
 
   useEffect(() => {
-    if (!chatbotId || initializedRef.current) return
+    if (!chatbotId) return
 
-    initializedRef.current = true
     const existingChatData = storage.getJSON(Keys.chatData(chatbotId))
-    if (existingChatData) {
-      refreshChatData()
+    if (existingChatData?.poshtibot_chat_id) {
       return
     }
+
+    if (!config?.user_flows_data || lunchRef.current) return
+    lunchRef.current = true
 
     const newChatData = {
       poshtibot_chat_id: uuidv4(),
@@ -56,11 +57,14 @@ export default function WidgetRoot({ chatbotId }) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        user_flows_data: config?.user_flows_data ?? null,
+        user_flows_data: config.user_flows_data,
         chat_id: newChatData.poshtibot_chat_id
       })
-    }).catch((error) => console.error('[Widget] Failed to initialize chat:', error))
-  }, [chatbotId, config])
+    }).catch((error) => {
+      lunchRef.current = false
+      console.error('[Widget] Failed to initialize chat:', error)
+    })
+  }, [chatbotId, config?.user_flows_data])
 
   useEffect(() => {
     const handleMessage = (event) => {

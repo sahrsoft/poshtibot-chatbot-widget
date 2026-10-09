@@ -115,7 +115,7 @@ const CollectLeads = ({ config, chatbotId, onLeadsCollected }) => {
           </Typography>
         )}
 
-        {config.leads_from_name === 1 && (
+        {Number(config.leads_from_name) === 1 && (
           <TextField
             name='name'
             variant='standard'
@@ -130,7 +130,7 @@ const CollectLeads = ({ config, chatbotId, onLeadsCollected }) => {
           />
         )}
 
-        {config.leads_from_email === 1 && (
+        {Number(config.leads_from_email) === 1 && (
           <TextField
             name='email'
             variant='standard'
@@ -146,7 +146,7 @@ const CollectLeads = ({ config, chatbotId, onLeadsCollected }) => {
           />
         )}
 
-        {config.leads_from_mobile === 1 && (
+        {Number(config.leads_from_mobile) === 1 && (
           <TextField
             name='mobile'
             variant='standard'
